@@ -1,2 +1,35 @@
-env:
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+name: Deploy Dash App
+
+on:
+  push:
+    branches:
+      - main  # Change this if using a different branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Debug Environment Variables
+        run: |
+          echo "DATABASE_URL is: $DATABASE_URL"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run the Dash App
+        run: |
+          python app.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -21,4 +21,6 @@ def try_to_update_health_status(list_country):
 
     return
 
-import json
+def access_to_db_url():
+    # return the db url in github secrects
+    return os.getenv("DATABASE_URL")
