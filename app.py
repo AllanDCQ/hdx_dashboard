@@ -6,6 +6,9 @@ import dash_bootstrap_components as dbc
 
 import app_function as af
 
+import plotly.graph_objects as go
+import pandas as pd
+
 
 
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
@@ -48,6 +51,15 @@ file_path = "countries.json"
 with open(file_path, "r") as file:
     country_data = json.load(file)
 
+file_path = "filtered_world.geojson"
+with open(file_path, "r") as file:
+    geojson_data = json.load(file)
+
+# Create a mapping DataFrame for all countries in the GeoJSON
+geo_countries = [{"CODE": feature["properties"]["CODE"], "NAME": feature["properties"]["NAME"]}
+                 for feature in geojson_data["features"]]
+geo_df = pd.DataFrame(geo_countries)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -71,7 +83,7 @@ app.layout = html.Div([
                 html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton),
                 html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
                 html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton),
-                html.Button("SubRegion Info", id="subregion-btn", n_clicks=0, className=classButton),
+                html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton),
             ], style={'paddingRight': '5vw','width': '50%'}),
             # ********************************************************************************
 
@@ -132,10 +144,11 @@ app.layout = html.Div([
 
     html.Div([
         dcc.Loading(
-            id="loading-indicator",
+            id="loading-indicator2",
             type="default", # choose from 'circle', 'dot', 'default'
             children=html.Div(id="status-page")
-        )
+        ),
+        dcc.Store(id='intermediate-value'),
     ])
 
 ])
@@ -175,11 +188,12 @@ def update_date(new_selected_year):
     Output("page-content", "children"),  # Update the title dynamically
         Output("maximum-alert", "children"),
         Output("status-page", "children"),
+        Output("intermediate-value", "data"),
     [
         Input("health-btn", "n_clicks"),
         Input("risk-btn", "n_clicks"),
         Input("service-btn", "n_clicks"),
-        Input("subregion-btn", "n_clicks"),
+        Input("healthsys-btn", "n_clicks"),
         Input("remove-countries-btn", "n_clicks"),
     ] + [
         Input(country["alpha3"], "n_clicks")
@@ -197,7 +211,7 @@ def update_page_and_countries(*args):
         - Output: id= **page-content** Updates the `page-content` element with the current title and selected countries.
         - Output: id= **maximum-alert** Displays an alert if the maximum number of countries is selected.
         - Output: id= **status-page** Updates the `status-page` element with the current status page content.
-        - Input: id = **health-btn**, **risk-btn**, **service-btn**, **subregion-btn**, **remove-countries-btn** Handles button clicks for different indicators and removing selected countries.
+        - Input: id = **health-btn**, **risk-btn**, **service-btn**, **healthsys-btn**, **remove-countries-btn** Handles button clicks for different indicators and removing selected countries.
         - Input: id = **country-dropdown** Handles country selections from the dropdown menu.
 
     :param args: The arguments passed from the callback inputs.
@@ -229,8 +243,8 @@ def update_page_and_countries(*args):
                 title_page = "Risk Factors Indicators"
             case "service-btn": # If the trigger source is the Service Coverage button
                 title_page = "Service Coverage Indicators"
-            case "subregion-btn": # If the trigger source is the SubRegion Info button
-                title_page = "SubRegion Information"
+            case "healthsys-btn": # If the trigger source is the Health Systems button
+                title_page = "Health Systems"
             case "remove-countries-btn": # If the trigger source is the Remove Selected Countries button
                 # Clear selected countries
                 selected_countries_list.clear()
@@ -263,7 +277,8 @@ def update_page_and_countries(*args):
                         return (
                             html.H4(f"{title_page} : {', '.join([c['name'] for c in selected_countries_list])}"),
                             alert,
-                            display_status_page()
+                            display_status_page(),
+                            selected_countries_list
                         )
 
                     else :
@@ -284,12 +299,103 @@ def update_page_and_countries(*args):
     return (
         html.H4(f"{title_page} : {countries}"),
         alert,
-        display_status_page()
+        display_status_page(),
+        selected_countries_list
     )
+
+
+import numpy as np
+
+@app.callback(
+    Output("world-map", "figure"),
+    [
+        Input("intermediate-value", "data")
+    ],
+)
+def update_map(*args):
+    """
+    Update the world map based on the selected countries.
+
+    This callback function updates the world map based on the selected countries stored in the global variable `selected_countries_list`.
+        - Output: id= **world-map** Updates the `world-map` element with the updated world map.
+        - Input: id = **intermediate-value** Receives the selected countries list from the global variable.
+
+    :param args: The arguments passed from the callback inputs.
+    :type args: list
+
+    :return: The updated figure for the world map.
+    :rtype: plotly.graph_objects.Figure
+    """
+
+    global selected_countries_list
+
+    fig = go.Figure()
+    locations = []
+    z = []
+    hovertext = None
+    map = geojson_data  # Default map
+
+    if selected_countries_list:
+        selected_df = pd.DataFrame(selected_countries_list)
+        selected_df["alpha3"] = selected_df["alpha3"].str.upper()
+
+        # Filter GeoJSON for selected countries
+        selected_geojson_data = {
+            "type": "FeatureCollection",
+            "features": [
+                feature
+                for feature in geojson_data["features"]
+                if feature["properties"]["CODE"] in selected_df["alpha3"].values
+            ]
+        }
+
+        # Update geo_df for selection status
+        geo_df["selected"] = geo_df["CODE"].apply(
+            lambda x: 1 if x in selected_df["alpha3"].values else 0
+        )
+
+        map = selected_geojson_data
+        locations = geo_df["CODE"]
+        z = geo_df["selected"]
+        hovertext = geo_df["NAME"]
+
+
+    # Add the Choropleth layer to the map
+    fig.add_trace(go.Choroplethmap(
+        geojson=map,  # Use the filtered GeoJSON
+        locations=locations,
+        z=z,
+        colorscale=["lightgray", "lightgray"],  # Light gray for non-selected, red for selected
+        marker=dict(opacity=0.6, line=dict(color='red', width=2)),
+        showscale=False,  # Hide the color scale
+        featureidkey="properties.CODE",
+        hovertext=hovertext,
+        hoverinfo="text"
+    ))
+
+
+    # Update the layout for the map view to focus on the last selected country
+    fig.update_layout(
+        mapbox=dict(
+            style="white-bg",  # This is a simple Plotly style, doesn't need access token
+            zoom=3.5,  # Adjust zoom level to get a closer or farther view
+            center=dict(lat=0, lon=0),  # Set dynamic center based on lat/lon
+            accesstoken=None,
+        ),
+        margin={"r": 0, "t": 0, "l": 0, "b": 0}  # Remove margins
+    )
+
+    return fig
 
 
 
 def display_status_page():
+    """
+    Display the status page based on the selected title.
+
+    :return: The content of the status page based on the selected title.
+    :rtype: dash.development.base_component.Component
+    """
 
     global title_page
     global selected_countries_list
@@ -303,8 +409,8 @@ def display_status_page():
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page()
 
-        case "SubRegion Information":
-            return af.generate_subregion_status_page()
+        case "Health Systems":
+            return af.generate_health_systems_page()
 
         case _:
             return None
