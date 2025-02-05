@@ -62,13 +62,107 @@ def get_country_name_by_alpha3(alpha3, country_data):
 
 
 def generate_health_status_page():
-    return html.H4("Health status : Under Construction")
+
+    map = html.Div([
+        dcc.Loading(
+            id="loading-indicator",  # ID pour l'indicateur de chargement
+            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},  # This initializes the map when the app loads
+                    selectedData=None  # We use this property to capture selected country data
+                )
+            ]
+        )
+    ], style={'width': '60%', 'height': '40vh'})
+
+    something = html.Div([html.H4("Health status : Under Construction")], style={'width': '40%', 'height': '80vh'})
+
+    row_1 = html.Div([
+        map,
+        something,
+    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
+
+
+    return row_1
 
 def generate_factors_risk_status_page():
-    return html.H4("Risk status : Under Construction")
+
+    map = html.Div([
+        dcc.Loading(
+            id="loading-indicator",  # ID pour l'indicateur de chargement
+            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},  # This initializes the map when the app loads
+                    selectedData=None  # We use this property to capture selected country data
+                )
+            ]
+        )
+    ], style={'width': '60%', 'height': '40vh'})
+
+    something = html.Div([html.H4("Health status : Under Construction")], style={'width': '40%', 'height': '80vh'})
+
+    row_1 = html.Div([
+        map,
+        something,
+    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
+
+
+    return row_1
 
 def generate_coverage_status_page():
-    return html.H4("Coverage status : Under Construction")
+    map = html.Div([
+        dcc.Loading(
+            id="loading-indicator",  # ID pour l'indicateur de chargement
+            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},  # This initializes the map when the app loads
+                    selectedData=None  # We use this property to capture selected country data
+                )
+            ]
+        )
+    ], style={'width': '60%', 'height': '40vh'})
 
-def generate_subregion_status_page():
-    return html.H4("Sub Region status : Under Construction")
+    something = html.Div([html.H4("Risk Factor : Under Construction")], style={'width': '40%', 'height': '80vh'})
+
+    row_1 = html.Div([
+        map,
+        something,
+    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
+
+
+    return row_1
+
+def generate_health_systems_page():
+    map = html.Div([
+        dcc.Loading(
+            id="loading-indicator",  # ID pour l'indicateur de chargement
+            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},  # This initializes the map when the app loads
+                    selectedData=None  # We use this property to capture selected country data
+                )
+            ]
+        )
+    ], style={'width': '60%', 'height': '40vh'})
+
+    something = html.Div([html.H4("Health systems : Under Construction")], style={'width': '40%', 'height': '80vh'})
+
+    row_1 = html.Div([
+        map,
+        something,
+    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
+
+
+    return row_1
