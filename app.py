@@ -1,5 +1,6 @@
 import json
 import os
+from flask import Flask
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -14,8 +15,12 @@ import pandas as pd
 
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
 
+# Create a Flask server
+server = Flask(__name__)
+
 # Initialise Dash app with Bootstrap CSS and suppress callback exceptions
 app = dash.Dash(__name__,
+                server=server,
                 external_stylesheets=[dbc.themes.BOOTSTRAP],
                 suppress_callback_exceptions=True)
 
@@ -421,4 +426,4 @@ def display_status_page():
 port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=port, debug=True)
+    app.run_server(host="0.0.0.0", port=port, debug=False)
