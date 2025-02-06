@@ -1,10 +1,14 @@
 import json
 import os
+
 from flask import Flask
+from flask_caching import Cache
+
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
+import numpy as np
 
 import app_function as af
 
@@ -32,6 +36,9 @@ selected_year = 2008
 # Initial default title page
 title_page = "Health Status Indicators"
 
+cache = Cache(server, config={"CACHE_TYPE": "simple"})
+cache.init_app(server)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -57,14 +64,17 @@ with open(file_path, "r") as file:
     country_data = json.load(file)
 
 
-file_path = "filtered_world.geojson"
-with open(file_path, "r") as file:
-    geojson_data = json.load(file)
+@cache.memoize(timeout=86400)  # Cache for 1 day
+def get_geo_df():
+    file_path = "filtered_world.geojson"
+    with open(file_path, "r") as file:
+        geojson_data = json.load(file)
 
-# Create a mapping DataFrame for all countries in the GeoJSON
-geo_countries = [{"CODE": feature["properties"]["CODE"], "NAME": feature["properties"]["NAME"]}
-                 for feature in geojson_data["features"]]
-geo_df = pd.DataFrame(geo_countries)
+    geo_countries = [{"CODE": feature["properties"]["CODE"], "NAME": feature["properties"]["NAME"]}
+                     for feature in geojson_data["features"]]
+    return geojson_data, pd.DataFrame(geo_countries)
+
+geojson_data, geo_df = get_geo_df()  # Load once, then reuse
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -311,8 +321,6 @@ def update_page_and_countries(*args):
     )
 
 
-import numpy as np
-
 @app.callback(
     Output("world-map", "figure"),
     [
@@ -340,7 +348,6 @@ def update_map(*args):
     locations = []
     z = []
     hovertext = None
-    map = geojson_data  # Default map
 
     if selected_countries_list:
         selected_df = pd.DataFrame(selected_countries_list)
@@ -357,17 +364,17 @@ def update_map(*args):
         }
 
         # Update geo_df for selection status
-        geo_df["selected"] = geo_df["CODE"].apply(
-            lambda x: 1 if x in selected_df["alpha3"].values else 0
-        )
+        geo_df["selected"] = np.where(geo_df["CODE"].isin(selected_df["alpha3"]), 1, 0)
 
         map = selected_geojson_data
         locations = geo_df["CODE"]
         z = geo_df["selected"]
         hovertext = geo_df["NAME"]
+    else:
+        map = geojson_data
 
 
-    # Add the Choropleth layer to the map
+        # Add the Choropleth layer to the map
     fig.add_trace(go.Choroplethmap(
         geojson=map,  # Use the filtered GeoJSON
         locations=locations,
