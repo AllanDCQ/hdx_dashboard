@@ -12,7 +12,6 @@ import plotly.graph_objects as go
 import pandas as pd
 
 
-
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
 
 # Create a Flask server
@@ -56,6 +55,7 @@ classButton = "btn btn-primary btn-sm mx-1"
 file_path = "countries.json"
 with open(file_path, "r") as file:
     country_data = json.load(file)
+
 
 file_path = "filtered_world.geojson"
 with open(file_path, "r") as file:
@@ -207,7 +207,7 @@ def update_date(new_selected_year):
         for subregion in country_data["regions"][region]
         for country in country_data["regions"][region][subregion]
         if isinstance(country, dict)
-    ],
+    ]
     )
 def update_page_and_countries(*args):
     """
