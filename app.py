@@ -252,8 +252,9 @@ def update_page_and_countries(*args):
                 return (
                     html.H4(f"{title_page} : No countries selected"),
                     alert,
-                    display_status_page()
-                        )
+                    display_status_page(),
+                    selected_countries_list
+                    )
             case _: # If the trigger source is something else (so a country selection)
 
                 # Get the alpha3 code : The selected country id is his alpha3 code (ex: Algeria clicked = DZA)
