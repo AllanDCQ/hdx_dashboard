@@ -1,6 +1,5 @@
 import dash_bootstrap_components as dbc
 from dash import dcc, html
-import dash_leaflet as dl
 
 def generate_country_menu(country_data):
     """
