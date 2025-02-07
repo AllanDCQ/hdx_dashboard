@@ -60,7 +60,7 @@ def get_country_name_by_alpha3(alpha3, country_data):
                  if isinstance(country, dict) and country["alpha3"] == alpha3), None)
 
 
-def generate_health_status_page():
+def generate_health_status_page(selected_countries_list):
 
     map = html.Div([
         dcc.Loading(
@@ -87,7 +87,7 @@ def generate_health_status_page():
 
     return row_1
 
-def generate_factors_risk_status_page():
+def generate_factors_risk_status_page(selected_countries_list):
 
     map = html.Div([
         dcc.Loading(
@@ -114,7 +114,7 @@ def generate_factors_risk_status_page():
 
     return row_1
 
-def generate_coverage_status_page():
+def generate_coverage_status_page(selected_countries_list):
     map = html.Div([
         dcc.Loading(
             id="loading-indicator",  # ID pour l'indicateur de chargement
@@ -140,7 +140,7 @@ def generate_coverage_status_page():
 
     return row_1
 
-def generate_health_systems_page():
+def generate_health_systems_page(selected_countries_list):
     map = html.Div([
         dcc.Loading(
             id="loading-indicator",  # ID pour l'indicateur de chargement

@@ -3,15 +3,13 @@
     "Africa": {
       "Northern Africa": [
         { "name": "Algeria", "alpha3": "DZA" },
-        { "name": "Egypt", "alpha3": "EGY" },
+        { "name": "Egypt, Arab Rep", "alpha3": "EGY" },
         { "name": "Libya", "alpha3": "LBY" },
         { "name": "Morocco", "alpha3": "MAR" },
         { "name": "Sudan", "alpha3": "SDN" },
-        { "name": "Tunisia", "alpha3": "TUN" },
-        { "name": "Western Sahara", "alpha3": "ESH" }
+        { "name": "Tunisia", "alpha3": "TUN" }
       ],
       "Eastern Africa": [
-        { "name": "British Indian Ocean Territory", "alpha3": "IOT" },
         { "name": "Burundi", "alpha3": "BDI" },
         { "name": "Comoros", "alpha3": "COM" },
         { "name": "Djibouti", "alpha3": "DJI" },
@@ -29,7 +27,7 @@
         { "name": "Somalia", "alpha3": "SOM" },
         { "name": "South Sudan", "alpha3": "SSD" },
         { "name": "Uganda", "alpha3": "UGA" },
-        { "name": "United Republic of Tanzania", "alpha3": "TZA"},
+        { "name": "Tanzania", "alpha3": "TZA"},
         { "name": "Zambia", "alpha3": "ZMB"},
         { "name": "Zimbabwe", "alpha3": "ZWE" }
       ],
@@ -38,8 +36,8 @@
         { "name": "Cameroon", "alpha3": "CMR" },
         { "name": "Central African Republic", "alpha3": "CAF"},
         { "name": "Chad", "alpha3": "TCD"},
-        { "name": "Congo", "alpha3": "COG"},
-        { "name": "Democratic Republic of the Congo", "alpha3": "COD"},
+        { "name": "Congo, Rep", "alpha3": "COG"},
+        { "name": "Congo, Dem Rep", "alpha3": "COD"},
         { "name": "Equatorial Guinea", "alpha3": "GNQ"},
         { "name": "Gabon", "alpha3": "GAB"},
         { "name": "Sao Tome and Principe", "alpha3": "STP"}
@@ -54,9 +52,9 @@
       "Western Africa": [
         { "name": "Benin", "alpha3": "BEN" },
         { "name": "Burkina Faso", "alpha3": "BFA" },
-        { "name": "Cape Verde", "alpha3": "CPV" },
-        { "name": "Côte d'Ivoire", "alpha3": "CIV" },
-        { "name": "Gambia", "alpha3": "GMB" },
+        { "name": "Cabo Verde", "alpha3": "CPV" },
+        { "name": "Cote d'ivoire", "alpha3": "CIV" },
+        { "name": "Gambia, The", "alpha3": "GMB" },
         { "name": "Ghana", "alpha3": "GHA" },
         { "name": "Guinea", "alpha3": "GIN" },
         { "name": "Guinea-Bissau", "alpha3": "GNB" },
@@ -73,10 +71,9 @@
     },
     "Americas": {
       "Caribbean": [
-          { "name": "Anguilla", "alpha3": "AIA" },
           { "name": "Antigua and Barbuda", "alpha3": "ATG" },
           { "name": "Aruba", "alpha3": "ABW" },
-          { "name": "Bahamas", "alpha3": "BHS" },
+          { "name": "Bahamas, The", "alpha3": "BHS" },
           { "name": "Barbados", "alpha3": "BRB" },
           { "name": "Bonaire, Sint Eustatius and Saba", "alpha3": "BES" },
           { "name": "British Virgin Islands", "alpha3": "VGB" },
@@ -92,11 +89,9 @@
           { "name": "Martinique", "alpha3": "MTQ" },
           { "name": "Montserrat", "alpha3": "MSR" },
           { "name": "Puerto Rico", "alpha3": "PRI" },
-          { "name": "Saint Barthélemy", "alpha3": "BLM" },
           { "name": "Saint Kitts and Nevis", "alpha3": "KNA" },
           { "name": "Saint Lucia", "alpha3": "LCA" },
-          { "name": "Saint Martin", "alpha3": "MAF" },
-          { "name": "Saint Vincent and the Grenadines", "alpha3": "VCT" },
+          { "name": "St Vincent and the Grenadines", "alpha3": "VCT" },
           { "name": "Sint Maarten", "alpha3": "SXM" },
           { "name": "Trinidad and Tobago", "alpha3": "TTO" },
           { "name": "Turks and Caicos Islands", "alpha3": "TCA" },
@@ -114,35 +109,29 @@
       ],
       "South America": [
         { "name": "Argentina", "alpha3": "ARG" },
-        { "name": "Bolivia (Plurinational State of)", "alpha3": "BOL" },
-        { "name": "Bouvet Island", "alpha3": "BVT" },
+        { "name": "Bolivia", "alpha3": "BOL" },
         { "name": "Brazil", "alpha3": "BRA" },
         { "name": "Chile", "alpha3": "CHL" },
         { "name": "Colombia", "alpha3": "COL" },
         { "name": "Ecuador", "alpha3": "ECU" },
-        { "name": "Falkland Islands (Malvinas)", "alpha3": "FLK" },
         { "name": "Guyana", "alpha3": "GUY" },
         { "name": "Paraguay", "alpha3": "PRY" },
         { "name": "Peru", "alpha3": "PER" },
         { "name": "Suriname", "alpha3": "SUR" },
         { "name": "Uruguay", "alpha3": "URY" },
-        { "name": "Venezuela", "alpha3": "VEN" }
+        { "name": "Venezuela, RB", "alpha3": "VEN" }
       ],
       "Northern America": [
           { "name": "Bermuda", "alpha3": "BMU" },
           { "name": "Canada", "alpha3": "CAN" },
           { "name": "Greenland", "alpha3": "GRL" },
-          { "name": "Saint Pierre and Miquelon", "alpha3": "SPM" },
-          { "name": "United States of America", "alpha3": "USA" }
-      ],
-      "Antarctica": [
-        { "name": "Antarctica", "alpha3": "ATA" }
+          { "name": "United States", "alpha3": "USA" }
       ]
     },
     "Asia": {
       "Central Asia": [
         { "name": "Kazakhstan", "alpha3": "KAZ" },
-        { "name": "Kyrgyzstan", "alpha3": "KGZ" },
+        { "name": "Kyrgyz Republic", "alpha3": "KGZ" },
         { "name": "Tajikistan", "alpha3": "TJK" },
         { "name": "Turkmenistan", "alpha3": "TKM" },
         { "name": "Uzbekistan", "alpha3": "UZB" }
@@ -151,16 +140,16 @@
         { "name": "China", "alpha3": "CHN" },
         { "name": "China, Hong Kong Special Administrative Region", "alpha3": "HKG" },
         { "name": "China, Macao Special Administrative Region", "alpha3": "MAC" },
-        { "name": "Democratic People's Republic of Korea", "alpha3": "PRK" },
+        { "name": "Korea, Dem People's Rep", "alpha3": "PRK" },
         { "name": "Japan", "alpha3": "JPN" },
         { "name": "Mongolia", "alpha3": "MNG" },
-        { "name": "South Korea", "alpha3": "KOR" }
+        { "name": "Korea, Rep", "alpha3": "KOR" }
       ],
       "South-Eastern Asia": [
         { "name": "Brunei Darussalam", "alpha3": "BRN" },
         { "name": "Cambodia", "alpha3": "KHM" },
         { "name": "Indonesia", "alpha3": "IDN" },
-        { "name": "Lao People's Democratic Republic", "alpha3": "LAO" },
+        { "name": "Lao PDR", "alpha3": "LAO" },
         { "name": "Malaysia", "alpha3": "MYS" },
         { "name": "Myanmar", "alpha3": "MMR" },
         { "name": "Philippines", "alpha3": "PHL" },
@@ -174,7 +163,7 @@
         { "name": "Bangladesh", "alpha3": "BGD" },
         { "name": "Bhutan", "alpha3": "BTN" },
         { "name": "India", "alpha3": "IND" },
-        { "name": "Iran (Islamic Republic of)", "alpha3": "IRN" },
+        { "name": "Iran, Islamic Rep", "alpha3": "IRN" },
         { "name": "Maldives", "alpha3": "MDV" },
         { "name": "Nepal", "alpha3": "NPL" },
         { "name": "Pakistan", "alpha3": "PAK" },
@@ -194,11 +183,11 @@
         { "name": "Oman", "alpha3": "OMN"},
         { "name": "Qatar", "alpha3": "QAT" },
         { "name": "Saudi Arabia", "alpha3": "SAU" },
-        { "name": "State of Palestine", "alpha3": "PSE" },
+        { "name": "West Bank and Gaza", "alpha3": "PSE" },
         { "name": "Syrian Arab Republic", "alpha3": "SYR" },
-        { "name": "Türkiye", "alpha3": "TUR" },
+        { "name": "Turkiye", "alpha3": "TUR" },
         { "name": "United Arab Emirates", "alpha3": "ARE" },
-        { "name": "Yemen", "alpha3": "YEM" }
+        { "name": "Yemen, Rep", "alpha3": "YEM" }
 
       ]
     },
@@ -209,29 +198,25 @@
         { "name": "Czechia", "alpha3": "CZE" },
         { "name": "Hungary", "alpha3": "HUN" },
         { "name": "Poland", "alpha3": "POL" },
-        { "name": "Republic of Moldova", "alpha3": "MDA" },
+        { "name": "Moldova", "alpha3": "MDA" },
         { "name": "Romania", "alpha3": "ROU" },
         { "name": "Russian Federation", "alpha3": "RUS" },
-        { "name": "Slovakia", "alpha3": "SVK" },
+        { "name": "Slovak Republic", "alpha3": "SVK" },
         { "name": "Ukraine", "alpha3": "UKR" }
       ],
       "Northern Europe": [
-        { "name": "Åland Islands", "alpha3": "ALA" },
         { "name": "Denmark", "alpha3": "DNK" },
         { "name": "Estonia", "alpha3": "EST" },
         { "name": "Faroe Islands", "alpha3": "FRO" },
         { "name": "Finland", "alpha3": "FIN" },
-        { "name": "Guernsey", "alpha3": "GGY" },
         { "name": "Iceland", "alpha3": "ISL" },
         { "name": "Ireland", "alpha3": "IRL" },
         { "name": "Isle of Man", "alpha3": "IMN" },
-        { "name": "Jersey", "alpha3": "JEY" },
         { "name": "Latvia", "alpha3": "LVA" },
         { "name": "Lithuania", "alpha3": "LTU" },
         { "name": "Norway", "alpha3": "NOR" },
-        { "name": "Svalbard and Jan Mayen Islands", "alpha3": "SJM" },
         { "name": "Sweden", "alpha3": "SWE" },
-        { "name": "United Kingdom of Great Britain and Northern Ireland", "alpha3": "GBR" }
+        { "name": "United Kingdom", "alpha3": "GBR" }
       ],
       "Southern Europe": [
         { "name": "Albania", "alpha3": "ALB" },
@@ -240,7 +225,6 @@
         { "name": "Croatia", "alpha3": "HRV" },
         { "name": "Gibraltar", "alpha3": "GIB" },
         { "name": "Greece", "alpha3": "GRC" },
-        { "name": "Holy See", "alpha3": "VAT" },
         { "name": "Italy", "alpha3": "ITA" },
         { "name": "Malta", "alpha3": "MLT" },
         { "name": "Montenegro", "alpha3": "MNE" },
@@ -259,17 +243,14 @@
         { "name": "Liechtenstein", "alpha3": "LIE" },
         { "name": "Luxembourg", "alpha3": "LUX" },
         { "name": "Monaco", "alpha3": "MCO" },
-        { "name": "Netherlands (Kingdom of the)", "alpha3": "NLD" },
+        { "name": "Netherlands", "alpha3": "NLD" },
         { "name": "Switzerland", "alpha3": "CHE" }
       ]
     },
     "Oceania": {
       "Australia and New Zealand": [
         { "name": "Australia", "alpha3": "AUS" },
-        { "name": "Heard Island and McDonald Islands", "alpha3": "HMD" },
-        { "name": "New Zealand", "alpha3": "NZL" },
-        { "name": "Norfolk Island", "alpha3": "NFK" }
-
+        { "name": "New Zealand", "alpha3": "NZL" }
       ],
       "Melanesia": [
         { "name": "Fiji", "alpha3": "FJI" },
@@ -282,18 +263,16 @@
         { "name": "Guam", "alpha3": "GUM" },
         { "name": "Kiribati", "alpha3": "KIR" },
         { "name": "Marshall Islands", "alpha3": "MHL" },
-        { "name": "Micronesia (Federated States of)", "alpha3": "FSM" },
+        { "name": "Micronesia, Fed Sts", "alpha3": "FSM" },
         { "name": "Nauru", "alpha3": "NRU" },
         { "name": "Northern Mariana Islands", "alpha3": "MNP" },
-        { "name": "Palau", "alpha3": "PLW" },
-        { "name": "United States Minor Outlying Islands", "alpha3": "UMI" }
+        { "name": "Palau", "alpha3": "PLW" }
       ],
       "Polynesia": [
         { "name": "American Samoa", "alpha3": "ASM" },
         { "name": "Cook Islands", "alpha3": "COK" },
         { "name": "French Polynesia", "alpha3": "PYF" },
         { "name": "Niue", "alpha3": "NIU" },
-        { "name": "Pitcairn", "alpha3": "PCN" },
         { "name": "Samoa", "alpha3": "WSM" },
         { "name": "Tokelau", "alpha3": "TKL" },
         { "name": "Tonga", "alpha3": "TON" },

@@ -29,6 +29,7 @@ app = dash.Dash(__name__,
 
 # Initialise list to store selected countries {"alpha3": selected_alpha3, "name": selected_country_name}
 selected_countries_list = []
+selected_geojson_data = {}
 
 # Initialise delfault year selected
 selected_year = 2008
@@ -343,6 +344,7 @@ def update_map(*args):
     """
 
     global selected_countries_list
+    global selected_geojson_data
 
     fig = go.Figure()
     locations = []
@@ -416,15 +418,15 @@ def display_status_page():
 
     match title_page:
         case "Health Status Indicators":
-            return af.generate_health_status_page()
+            return af.generate_health_status_page(selected_countries_list)
         case "Risk Factors Indicators":
-            return af.generate_factors_risk_status_page()
+            return af.generate_factors_risk_status_page(selected_countries_list)
 
         case "Service Coverage Indicators":
-            return af.generate_coverage_status_page()
+            return af.generate_coverage_status_page(selected_countries_list)
 
         case "Health Systems":
-            return af.generate_health_systems_page()
+            return af.generate_health_systems_page(selected_countries_list)
 
         case _:
             return None
