@@ -158,6 +158,8 @@ class FetchPageSingle:
 
     def add_indicator_to_db(self, indicator : str, column_name:str, column_fullname:str, column_date:str, column_value:str, id_countries:list[str], column_contry_id:str) -> None:
 
+        id_countries = [country.lower() for country in id_countries]
+
         # Check if the countries to up to date
         id_countries_to_update = self._check_update_date(indicator,id_countries)
 
@@ -184,12 +186,16 @@ class FetchPageSingle:
         # check if contry id from id_countries_to_update is in the dataset
         for country in id_countries_to_update:
             if any(dataset[column_contry_id] == country):
-                id_countries_to_db.append(country.lower())
+                id_countries_to_db.append(country)
             else:
                 print(f"{country} is not in the dataset")
 
         if id_countries_to_db == []:
             return
+
+
+        # Check if the column_date is a yyyy format and remove if not
+        #dataset = dataset[dataset[column_date].str.match(r'^\d{4}$', na=False)]
 
         data_to_update = {
             "list_countries_id": id_countries_to_db,
@@ -369,7 +375,16 @@ class FetchPage:
             return
 
         print(f"For {self.country}: Indicators to update: {list_indicators_to_update}")
+
         dataset = self._read_csv_from_list()
+
+        # check if indicator is in the dataset
+        for indicator in list_indicators_to_update[:]:
+            if not any(dataset[column_name] == indicator):
+                print(f"{indicator} is not in the dataset")
+                list_indicators_to_update.remove(indicator)
+            else:
+                continue
 
         data_to_update = {
             "country": self.country,
@@ -391,29 +406,19 @@ class FetchPage:
             if column_sexe is not None:
                 columns.append(column_sexe)
 
-            # Get the data for each indicator
-            data_to_update[str(indicator)] = (dataset[columns][dataset[column_name] == indicator].to_dict(orient="records"))
+            data_to_update[str(indicator)] = dataset[columns][dataset[column_name] == indicator].to_dict(orient="records")
 
-        # Check if the data is not empty
-        if any(data_to_update[str(indicator)] for indicator in list_indicators_to_update):
-            indicators = Indicators(data_to_update, list_indicators_to_update)
-            engine = create_engine(os.getenv("BASE_URL"))
-            with engine.begin() as connection:
-                indicators.send_data_to_db(engine, connection)
-        else:
-            # check which indicators are not in the dataset
 
-            for indicator in list_indicators_to_update:
-                if not any(dataset[column_name] == indicator):
-                    print(f"{indicator}: is not in the dataset")
+        indicators = Indicators(data_to_update, list_indicators_to_update)
+        engine = create_engine(os.getenv("BASE_URL"))
+        with engine.begin() as connection:
+            indicators.send_data_to_db(engine, connection)
+
 
         return
 
 
 ########################################################################################################################
-
-
-
 
 
 
@@ -447,7 +452,6 @@ class Indicator:
     def _get_data(self,dict_data):
 
         data = {country: dict_data[country] for country in self.list_countries_id}
-
 
         return data
 
