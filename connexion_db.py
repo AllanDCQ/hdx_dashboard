@@ -37,7 +37,7 @@ with engine.connect() as connection:
 
 
 
-################################################## FONCTIONS LEO-PAUL ##################################################
+############################################### FONCTIONS HEALTH STATUS ################################################
 
 
 def update_list_health_status(country_list):
@@ -53,14 +53,14 @@ def update_list_health_status(country_list):
         update_list_health_status(['fra', 'dza', 'gbr'])
         update_list_health_status(['fra'])
     """
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
 
         for country_id in country_list:
             futures.append(executor.submit(_fetch_who_data, country_id))
             futures.append(executor.submit(_fetch_world_bank_data, country_id))
 
-        concurrent.futures.wait(futures)  # Attend la fin des mises à jour des pays
+        concurrent.futures.wait(futures, timeout=10)  # Attend la fin des mises à jour des pays
 
     _fetch_unicef_data(country_list)
 
@@ -83,7 +83,7 @@ def update_all_health_status():
         for country_info in countries
     ]
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         executor.map(update_list_health_status, country_list)
 
 def _fetch_who_data(country_id):
@@ -95,20 +95,26 @@ def _fetch_who_data(country_id):
     :return: None
     :rtype: None
     """
+
+    indicators = ["WHOSIS_000001", "WHOSIS_000002"]
+
     try:
         dataset = webscraping.FetchPage(
             country_id=country_id,
             source_dataset="who-data",
             dataset_index=0
         )
-        dataset.add_indicator_to_db(
-            indicators=["WHOSIS_000001", "WHOSIS_000002"],
-            column_name="GHO (CODE)",
-            column_fullname="GHO (DISPLAY)",
-            column_value="Numeric",
-            column_date="ENDYEAR",
-            column_sexe="DIMENSION (NAME)"
-        )
+        if dataset.datasets_list is None:
+            raise ValueError(f"Error fetching data from WHO for {country_id} for {indicators}")
+        else:
+            dataset.add_indicator_to_db(
+                indicators=indicators,
+                column_name="GHO (CODE)",
+                column_fullname="GHO (DISPLAY)",
+                column_value="Numeric",
+                column_date="ENDYEAR",
+                column_sexe="DIMENSION (NAME)"
+            )
     except (AttributeError, ValueError) as e:
         print(f"Erreur avec {country_id} (WHO Data): {e}")
 
@@ -121,19 +127,24 @@ def _fetch_world_bank_data(country_id):
     :return: None
     :rtype: None
     """
+    indicators = ["SH.DYN.MORT", "SH.DYN.MORT.FE", "SH.DYN.MORT.MA", "SH.DYN.NMRT"]
     try:
         dataset2 = webscraping.FetchPage(
             country_id=country_id,
             source_dataset="world-bank-health-indicators",
             dataset_index=0
         )
-        dataset2.add_indicator_to_db(
-            indicators=["SH.DYN.MORT", "SH.DYN.MORT.FE", "SH.DYN.MORT.MA", "SH.DYN.NMRT"],
-            column_name="Indicator Code",
-            column_fullname="Indicator Name",
-            column_value="Value",
-            column_date="Year"
-        )
+        if dataset2.datasets_list is None:
+            raise ValueError(f"Error fetching data from World Bank for {country_id} for {indicators}")
+
+        else:
+            dataset2.add_indicator_to_db(
+                indicators=indicators,
+                column_name="Indicator Code",
+                column_fullname="Indicator Name",
+                column_value="Value",
+                column_date="Year"
+            )
     except (AttributeError, ValueError) as e:
         print(f"Erreur avec {country_id} (World Bank Data): {e}")
 
@@ -158,7 +169,189 @@ def _fetch_unicef_data(country_list):
             column_fullname="Indicator",
             column_value = "OBS_VALUE",
             column_date = "TIME_PERIOD")
+
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec UNICEF Data: {e}")
+        print(f"Erreur avec {country_list} (UNICEF Data): {e}")
+
 
 ########################################################################################################################
+
+
+
+
+
+
+
+
+
+
+############################################# FONCTIONS SERVICES COVERAGES #############################################
+
+def update_list_services_coverages(country_list):
+    """
+    Updates the health status for a list of countries by fetching data from WHO and World Bank.
+
+    :param country_list: List of country IDs to update.
+    :type country_list: list
+    :return: None
+    :rtype: None
+
+    Examples usage:
+        update_list_health_status(['fra', 'dza', 'gbr'])
+        update_list_health_status(['fra'])
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = []
+
+        for country_id in country_list:
+            futures.append(executor.submit(_fetch_hiv_data, country_id))
+            futures.append(executor.submit(_fetch_tuberculosis_data, country_id))
+            futures.append(executor.submit(_fetch_malaria_data, country_id))
+            futures.append(executor.submit(_fetch_immunization_data, country_id))
+
+        concurrent.futures.wait(futures, timeout=10)
+
+
+def update_all_services_coverages():
+    """
+    Updates the health status for all countries by fetching data from various sources.
+
+    :return: None
+    :rtype: None
+    """
+    with open("countries.json", "r") as f:
+        countries = json.load(f)
+
+    country_list = [
+        country_info["alpha3"].lower()
+        for subregions in countries["regions"].values()
+        for countries in subregions.values()
+        for country_info in countries
+    ]
+
+    update_list_services_coverages(country_list)
+
+
+def _fetch_hiv_data(country_id):
+    """
+    Fetches WHO data for a given country and updates the database.
+
+    :param country_id: The ID of the country to fetch data for.
+    :type country_id: str
+    :return: None
+    :rtype: None
+    """
+    indicators = ["SDGHIV"]
+    try:
+        dataset = webscraping.FetchPage(
+            country_id=country_id,
+            source_dataset="who-data",
+            dataset_name="HIV Indicators",
+        )
+        dataset.add_indicator_to_db(
+            indicators=indicators,
+            column_name="GHO (CODE)",
+            column_fullname="GHO (DISPLAY)",
+            column_value="Numeric",
+            column_date="ENDYEAR",
+            column_sexe="DIMENSION (NAME)"
+        )
+    except (AttributeError, ValueError) as e:
+        print(f"Erreur avec {country_id} (WHO Data): {e}")
+
+def _fetch_tuberculosis_data(country_id):
+    """
+    Fetches WHO data for a given country and updates the database.
+
+    :param country_id: The ID of the country to fetch data for.
+    :type country_id: str
+    :return: None
+    :rtype: None
+    """
+    indicators = ["MDG_0000000020"]
+    try:
+        dataset = webscraping.FetchPage(
+            country_id=country_id,
+            source_dataset="who-data",
+            dataset_name="Tuberculosis Indicators",
+        )
+        dataset.add_indicator_to_db(
+            indicators=indicators,
+            column_name="GHO (CODE)",
+            column_fullname="GHO (DISPLAY)",
+            column_value="Numeric",
+            column_date="ENDYEAR",
+            column_sexe="DIMENSION (NAME)"
+        )
+    except (AttributeError, ValueError) as e:
+        print(f"Erreur avec {country_id} (WHO Data): {e}")
+
+def _fetch_malaria_data(country_id):
+    """
+    Fetches WHO data for a given country and updates the database.
+
+    :param country_id: The ID of the country to fetch data for.
+    :type country_id: str
+    :return: None
+    :rtype: None
+    """
+    indicators = ["MALARIA_EST_INCIDENCE"]
+    try:
+        dataset = webscraping.FetchPage(
+            country_id=country_id,
+            source_dataset="who-data",
+            dataset_name="Malaria Indicators",
+        )
+        dataset.add_indicator_to_db(
+            indicators=indicators,
+            column_name="GHO (CODE)",
+            column_fullname="GHO (DISPLAY)",
+            column_value="Numeric",
+            column_date="ENDYEAR",
+            column_sexe="DIMENSION (NAME)"
+        )
+    except (AttributeError, ValueError) as e:
+        print(f"Erreur avec {country_id} (WHO Data): {e}")
+
+def _fetch_immunization_data(country_id):
+    """
+    Fetches WHO data for a given country and updates the database.
+
+    :param country_id: The ID of the country to fetch data for.
+    :type country_id: str
+    :return: None
+    :rtype: None
+    """
+    indicators = ["WHS3_62","WHS3_41","WHS3_57"]
+    try:
+        dataset = webscraping.FetchPage(
+            country_id=country_id,
+            source_dataset="who-data",
+            dataset_name="Immunization coverage and vaccine-preventable diseases Indicators",
+        )
+        dataset.add_indicator_to_db(
+            indicators=indicators,
+            column_name="GHO (CODE)",
+            column_fullname="GHO (DISPLAY)",
+            column_value="Numeric",
+            column_date="ENDYEAR",
+            column_sexe="DIMENSION (NAME)"
+        )
+    except (AttributeError, ValueError) as e:
+        print(f"Erreur avec {country_id} (WHO Data): {e}")
+
+
+########################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+

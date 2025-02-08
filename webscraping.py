@@ -82,7 +82,6 @@ class FetchPageSingle:
             else:
                 return df_list_dataset.iloc[self.dataset_index]
 
-
     def _read_csv_from_list(self) -> pd.DataFrame:
         """
         Downloads a specific dataset and returns it as a DataFrame.
@@ -157,8 +156,6 @@ class FetchPageSingle:
 
         return name_countries, not_countries, id_countries
 
-
-
     def add_indicator_to_db(self, indicator : str, column_name:str, column_fullname:str, column_date:str, column_value:str, id_countries:list[str], column_contry_id:str) -> None:
 
         # Check if the countries to up to date
@@ -182,8 +179,20 @@ class FetchPageSingle:
 
         dataset = self._read_csv_from_list()
 
+        id_countries_to_db = []
+
+        # check if contry id from id_countries_to_update is in the dataset
+        for country in id_countries_to_update:
+            if any(dataset[column_contry_id] == country):
+                id_countries_to_db.append(country.lower())
+            else:
+                print(f"{country} is not in the dataset")
+
+        if id_countries_to_db == []:
+            return
+
         data_to_update = {
-            "list_countries_id": id_countries_to_update,
+            "list_countries_id": id_countries_to_db,
             "list_countries_name": countries_names_to_update,
             "source_dataset": self.source_dataset,
             "download_date": date.today().strftime("%Y-%m-%d"),
@@ -195,16 +204,10 @@ class FetchPageSingle:
             "column_contry_id" : column_contry_id
         }
 
-        for country in id_countries_to_update:
-            try :
-                data_to_update[str(country)] = (dataset[[column_contry_id,
-                                                    column_name,
-                                                    column_fullname,
-                                                    column_date,
-                                                    column_value]][dataset[column_contry_id] == country].to_dict(orient="records"))
-            except KeyError as e:
-                print(f"Error extracting data from dataset: {e} for the country {country}")
-                continue
+        columns = [column_contry_id, column_name, column_fullname, column_date, column_value]
+
+        for country in id_countries_to_db:
+            data_to_update[str(country)] = (dataset[columns][dataset[column_contry_id] == country.upper()].to_dict(orient="records"))
 
         indicator = Indicator(data_to_update, indicator)
 
@@ -226,12 +229,13 @@ class FetchPage:
     :param source_dataset: The source of dataset to fetch (e.g. "who-data").
     :param dataset_index: The index of the dataset to fetch (optional).
     """
-    def __init__(self, country_id, source_dataset, dataset_index = None):
+    def __init__(self, country_id, source_dataset, dataset_index = None, dataset_name = None):
         self.id_country = country_id.lower()
         self.source_dataset = source_dataset
 
         self.country = self._get_country_name()
         self.dataset_index = dataset_index
+        self.dataset_name = dataset_name
 
         self.datasets_list = self._get_datasets_list()
 
@@ -248,7 +252,6 @@ class FetchPage:
                         return country_info["name"].lower()
 
         return None
-
 
     def _get_datasets_list(self) -> pd.DataFrame:
         """
@@ -269,8 +272,7 @@ class FetchPage:
             response = requests.get(datasets_url)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching data from {datasets_url}: {e}")
-            return pd.DataFrame()  # Return an empty DataFrame in case of an error
+            return None
 
         soup = BeautifulSoup(response.content, "html.parser")
         resource_list = soup.find(class_="hdx-bs3 resource-list")
@@ -278,33 +280,29 @@ class FetchPage:
         # Create a DataFrame to store the datasets
         df_list_dataset = pd.DataFrame(columns=["title", "update_date", "download_date", "url"])
 
-        if self.dataset_index is not None:
-            for dataset in resource_list.find_all(class_="resource-item"):
-                # Extract data from the dataset
-                try:
-                    title = dataset.find('a').get('title') # Title of the dataset
-                    update_date = dataset.find(class_="update-date").get_text().strip().split('\n')[-1].strip() # Date of the last update on the website
-                    url = base_url + dataset.find(class_="resource-download-button").get('href') # URL of the dataset
+        for dataset in resource_list.find_all(class_="resource-item"):
+            # Extract data from the dataset
+            try:
+                title = dataset.find('a').get('title') # Title of the dataset
+                update_date = dataset.find(class_="update-date").get_text().strip().split('\n')[-1].strip() # Date of the last update on the website
+                url = base_url + dataset.find(class_="resource-download-button").get('href') # URL of the dataset
 
-                    new_row = {
-                        "title": title,
-                        "update_date": datetime.strptime(update_date, "%d %B %Y").date(),
-                        "download_date": date.today(),
-                        "url": url
-                    }
+                new_row = {
+                    "title": title,
+                    "update_date": datetime.strptime(update_date, "%d %B %Y").date(),
+                    "download_date": date.today(),
+                    "url": url
+                }
 
-                    # Append the new row to the DataFrame
-                    df_list_dataset = pd.concat([df_list_dataset, pd.DataFrame([new_row])], ignore_index=True)
+                # Append the new row to the DataFrame
+                df_list_dataset = pd.concat([df_list_dataset, pd.DataFrame([new_row])], ignore_index=True)
 
-                except (AttributeError, ValueError) as e:
-                    print(f"Error extracting data from dataset: {e}")
-                    continue
-                return df_list_dataset
-            else:
-                return df_list_dataset.iloc[self.dataset_index]
+            except (AttributeError, ValueError) as e:
+                print(f"Error extracting data from dataset: {e}")
+                continue
+        return df_list_dataset
 
     def _check_update_date(self, list_indicators):
-
 
         engine = create_engine(os.getenv("BASE_URL"))
         with engine.connect() as connection:
@@ -328,7 +326,6 @@ class FetchPage:
                         list_indicators_to_update.append(indicator)
 
         return list_indicators_to_update
-
 
     def _read_csv_from_list(self) -> pd.DataFrame:
         """
@@ -358,7 +355,14 @@ class FetchPage:
 
         if dataset_index is not None:
             self.dataset_index = dataset_index
-            self.datasets_list = self._get_datasets_list()
+
+        if self.dataset_name is not None:
+            for index, row in self.datasets_list.iterrows():
+                if self.dataset_name.lower() in row["title"].lower():
+                    self.dataset_index = index
+                    break
+            else:
+                return f"The dataset {self.dataset_name} is not in the list of datasets for {self.country}"
 
         if len(list_indicators_to_update) == 0:
             print(f"{indicators}: are already up to date")
@@ -380,25 +384,28 @@ class FetchPage:
             "column_sexe" : column_sexe
         }
 
+        # Get the data for each indicator
         for indicator in list_indicators_to_update:
-
+            columns = [column_name, column_fullname, column_date, column_value]
+            # Add the column sexe if it exists
             if column_sexe is not None:
-                data_to_update[str(indicator)] = (dataset[[column_name,
-                                                    column_fullname,
-                                                    column_date,
-                                                    column_value,
-                                                    column_sexe]][dataset[column_name] == indicator].to_dict(orient="records"))
-            else:
-                data_to_update[str(indicator)] = (dataset[[column_name,
-                                                    column_fullname,
-                                                    column_date,
-                                                    column_value]][dataset[column_name] == indicator].to_dict(orient="records"))
+                columns.append(column_sexe)
 
-        indicators = Indicators(data_to_update, list_indicators_to_update)
+            # Get the data for each indicator
+            data_to_update[str(indicator)] = (dataset[columns][dataset[column_name] == indicator].to_dict(orient="records"))
 
-        engine = create_engine(os.getenv("BASE_URL"))
-        with engine.begin() as connection:
-            indicators.send_data_to_db(engine, connection)
+        # Check if the data is not empty
+        if any(data_to_update[str(indicator)] for indicator in list_indicators_to_update):
+            indicators = Indicators(data_to_update, list_indicators_to_update)
+            engine = create_engine(os.getenv("BASE_URL"))
+            with engine.begin() as connection:
+                indicators.send_data_to_db(engine, connection)
+        else:
+            # check which indicators are not in the dataset
+
+            for indicator in list_indicators_to_update:
+                if not any(dataset[column_name] == indicator):
+                    print(f"{indicator}: is not in the dataset")
 
         return
 
@@ -441,6 +448,7 @@ class Indicator:
 
         data = {country: dict_data[country] for country in self.list_countries_id}
 
+
         return data
 
     def _add_row_country(self, country_id, index, engine, connection):
@@ -452,7 +460,8 @@ class Indicator:
         result = connection.execute(query).fetchone()
 
         if result is None:
-            new_row = {"id_country": country_id, "country_name": self.list_countries_name[index]}
+            new_row = {"id_country": country_id,
+                       "country_name": self.list_countries_name[index]}
             insert_stmt = insert(country_table).values(new_row)
             connection.execute(insert_stmt)
 
@@ -520,6 +529,7 @@ class Indicator:
     def send_data_to_db(self, engine, connection) -> None:
         index = 0
         for country_id in self.list_countries_id:
+            country_id = country_id.lower()
             df = pd.DataFrame(self.data[country_id])
             try :
                 self._add_row_country(country_id, index, engine, connection)

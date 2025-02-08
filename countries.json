@@ -21,7 +21,7 @@
         { "name": "Mauritius", "alpha3": "MUS" },
         { "name": "Mayotte", "alpha3": "MYT" },
         { "name": "Mozambique", "alpha3": "MOZ" },
-        { "name": "Réunion", "alpha3": "REU" },
+        { "name": "Reunion", "alpha3": "REU" },
         { "name": "Rwanda", "alpha3": "RWA" },
         { "name": "Seychelles", "alpha3": "SYC" },
         { "name": "Somalia", "alpha3": "SOM" },
@@ -79,7 +79,7 @@
           { "name": "British Virgin Islands", "alpha3": "VGB" },
           { "name": "Cayman Islands", "alpha3": "CYM" },
           { "name": "Cuba", "alpha3": "CUB" },
-          { "name": "Curaçao", "alpha3": "CUW" },
+          { "name": "Curacao", "alpha3": "CUW" },
           { "name": "Dominica", "alpha3": "DMA" },
           { "name": "Dominican Republic", "alpha3": "DOM" },
           { "name": "Grenada", "alpha3": "GRD" },
@@ -95,7 +95,7 @@
           { "name": "Sint Maarten", "alpha3": "SXM" },
           { "name": "Trinidad and Tobago", "alpha3": "TTO" },
           { "name": "Turks and Caicos Islands", "alpha3": "TCA" },
-          { "name": "United States Virgin Islands", "alpha3": "VIR" }
+          { "name": "Virgin Islands U S", "alpha3": "VIR" }
       ],
       "Central America": [
         { "name": "Belize", "alpha3": "BLZ" },
@@ -138,8 +138,8 @@
       ],
       "Eastern Asia": [
         { "name": "China", "alpha3": "CHN" },
-        { "name": "China, Hong Kong Special Administrative Region", "alpha3": "HKG" },
-        { "name": "China, Macao Special Administrative Region", "alpha3": "MAC" },
+        { "name": "Hong Kong SAR, China", "alpha3": "HKG" },
+        { "name": "Macao SAR, China", "alpha3": "MAC" },
         { "name": "Korea, Dem People's Rep", "alpha3": "PRK" },
         { "name": "Japan", "alpha3": "JPN" },
         { "name": "Mongolia", "alpha3": "MNG" },
@@ -270,9 +270,7 @@
       ],
       "Polynesia": [
         { "name": "American Samoa", "alpha3": "ASM" },
-        { "name": "Cook Islands", "alpha3": "COK" },
         { "name": "French Polynesia", "alpha3": "PYF" },
-        { "name": "Niue", "alpha3": "NIU" },
         { "name": "Samoa", "alpha3": "WSM" },
         { "name": "Tokelau", "alpha3": "TKL" },
         { "name": "Tonga", "alpha3": "TON" },
