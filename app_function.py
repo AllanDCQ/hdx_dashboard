@@ -6,8 +6,6 @@ import os
 from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
 
-os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
-
 
 
 
