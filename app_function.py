@@ -1,6 +1,7 @@
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import os
 
 from sqlalchemy import select, create_engine, MetaData, Table, and_
@@ -705,7 +706,14 @@ def generate_coverage_status_page(selected_countries_list):
 
     return row_1
 
-def generate_health_systems_page(selected_countries_list):
+
+
+
+
+
+
+# Code
+def generate_health_systems_page(selected_countries_list, selected_year):
     map = html.Div([
         dcc.Loading(
             id="loading-indicator",  # ID pour l'indicateur de chargement
@@ -719,14 +727,134 @@ def generate_health_systems_page(selected_countries_list):
                 )
             ]
         )
-    ], style={'width': '60%', 'height': '40vh'})
+    ], style={'width': '60%', 'height': '50vh'})
 
-    something = html.Div([html.H4("Health systems : Under Construction")], style={'width': '40%', 'height': '80vh'})
+    birth_graph = update_health_systems_graph_birth(selected_countries_list, selected_year)
+    death_graph = update_health_systems_graph_death(selected_countries_list, selected_year)
 
-    row_1 = html.Div([
+    graphs = html.Div([
+        birth_graph,
+        death_graph
+    ], style={
+        'display': 'flex',
+        'flexDirection': 'row',
+        'alignItems': 'center',
+        'justifyContent': 'center',
+        'padding': '10px',
+        'width': '100%'
+    })
+
+    row_health_systems = html.Div([
         map,
-        something,
-    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
+        graphs,
+    ], style={
+        'display': 'flex',
+        'flexDirection': 'column',
+        'alignItems': 'center',
+        'justifyContent': 'center',
+        'padding': '10px',
+        'width': '100%'
+    })
+
+    return row_health_systems
+
+
+
+def get_health_systems_data_birth(selected_countries_list, selected_year) :
+
+    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
+
+    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+
+    database_url = os.getenv("BASE_URL")
+    engine = create_engine(database_url)
+
+    with engine.connect() as connection :
+        metadata = MetaData()
+        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
+
+        query= select(indicator_table).where(
+            indicator_table.columns.id_indicator == "SP.REG.BRTH.ZS",
+            indicator_table.columns.id_country.in_(country_codes),
+            indicator_table.columns.year_recorded.between(2000, selected_year)
+        )
+
+        result = connection.execute(query).fetchall()
+        df_birth = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
+
+        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
+        df_birth["id_country"] = df_birth["id_country"].str.lower().map(country_mapping)
+
+    return df_birth
+
+def get_health_systems_data_death(selected_countries_list, selected_year) :
+
+    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
+
+    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+
+    database_url = os.getenv("BASE_URL")
+    engine = create_engine(database_url)
+
+    with engine.connect() as connection :
+        metadata = MetaData()
+        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
+
+        query= select(indicator_table).where(
+            indicator_table.columns.id_indicator == "SP.REG.DTHS.ZS",
+            indicator_table.columns.id_country.in_(country_codes),
+            indicator_table.columns.year_recorded.between(2000, selected_year)
+        )
+
+        result = connection.execute(query).fetchall()
+        df_death = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
+
+        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
+        df_death["id_country"] = df_death["id_country"].str.lower().map(country_mapping)
+
+    return df_death
+
+
+
+def update_health_systems_graph_birth(selected_countries_list, selected_year) :
+    if selected_countries_list :
+        df_birth = get_health_systems_data_birth(selected_countries_list, selected_year)
+
+        # Création du graphique
+        fig = px.line(
+            data_frame = df_birth,
+            x = "year_recorded",
+            y = "value",
+            color = "id_country",
+            title = f"Birth rate from 2000 to {selected_year}"
+        )
+    else :
+        fig = {}
+
+    return dcc.Graph(id = 'update_health_systems_graph', figure=fig, style={'width': '60%', 'height': '40vh'})
+
+def update_health_systems_graph_death(selected_countries_list, selected_year) :
+    if selected_countries_list :
+        df_death = get_health_systems_data_death(selected_countries_list, selected_year)
+
+        fig = px.line(
+            data_frame = df_death,
+            x = "year_recorded",
+            y = "value",
+            color = "id_country",
+            title = f"Death rate from 2000 to {selected_year}"
+        )
+    else :
+        fig = {}
+
+    return dcc.Graph(id='update_health_systems_graph_death', figure=fig, style={'width': '50%', 'height': '40vh'})
+
+
+
+
+
+
+
 
 
     return row_1

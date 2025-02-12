@@ -449,7 +449,7 @@ def display_status_page():
             return af.generate_coverage_status_page(selected_countries_list)
 
         case "Health Systems":
-            return af.generate_health_systems_page(selected_countries_list)
+            return af.generate_health_systems_page(selected_countries_list,selected_year)
 
         case _:
             return None
