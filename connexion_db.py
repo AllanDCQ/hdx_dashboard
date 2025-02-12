@@ -1,39 +1,34 @@
-import os
+"""
+This module contains functions to update health status, services coverages, risk factors, and health systems data for various countries.
+It fetches data from WHO, World Bank, and UNICEF, and updates the database accordingly.
+
+Functions:
+    HEALTH STATUS INDICATORS:
+        - update_list_health_status : Updates the health status for a list of countries.
+        - update_all_health_status : Updates the health status for all countries.
+        - _fetch_who_data : Fetches indicators
+        - _fetch_world_bank_data : Fetches indicators
+        - _fetch_unicef_data : Fetches indicators
+
+    SERVICES COVERAGES INDICATORS:
+        - update_list_services_coverages : Updates the services coverages indicators for a list of countries.
+        - update_all_services_coverages : Updates the services coverages indicators for all countries.
+        - _fetch_hiv_data : Fetches indicators
+        - _fetch_tuberculosis_data : Fetches indicators
+        - _fetch_malaria_data : Fetches indicators
+        - _fetch_immunization_data : Fetches indicators
+
+    RISK FACTORS INDICATORS:
+        - update_list_risk_factors : Updates the risk factors for a list of countries.
+        - update_all_risk_factors : Updates the risk factors for all countries.
+        - _fetch_weight_data : Fetches indicators
+        - _fetch_drink_safe_data : Fetches indicators
+        - _fetch_drink_data : Fetches indicators
+        - _fetch_birth_data : Fetches indicators
+"""
 import webscraping
 import json
 import concurrent.futures
-
-
-"""
-CODE EXEMPLE POUR ACCEDER A LA BASE DE DONNEES
-
-# import   
-import os
-import pandas as pd
-from sqlalchemy import select, create_engine, MetaData, Table
-
-os.environ["BASE_URL"] = "postgresql://******************"  !!!!!!!!!!!!!!! à ne pas push sur GitHub !!!!!!!!!!!!!!!!!!!
-
-with engine.connect() as connection:
-    metadata = MetaData()
-
-    # Exemple Chargement de la table Indicator
-    indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-    # Exemple de requête
-    query = select(indicator_table).where(
-        indicator_table.columns.id_indicator == "MMR_100k",
-        indicator_table.columns.id_country == "GEO"
-    )
-    result = connection.execute(query).fetchall() # ou fetchone() si on veut un seul résultat
-
-    # create dataframe
-    df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-    
-
-
-"""
-
 
 
 
@@ -64,14 +59,9 @@ def update_list_health_status(country_list):
 
     _fetch_unicef_data(country_list)
 
-
-# Fonction principale pour traiter tous les pays
 def update_all_health_status():
     """
     Updates the health status for all countries by fetching data from various sources.
-
-    :return: None
-    :rtype: None
     """
     with open("countries.json", "r") as f:
         countries = json.load(f)
@@ -88,12 +78,12 @@ def update_all_health_status():
 
 def _fetch_who_data(country_id):
     """
-    Fetches WHO data for a given country and updates the database.
+    Fetches the indicators WHOSIS_000001 and WHOSIS_000002 from WHO for a given country and updates the database.
+        - WHOSIS_000001 : Life expectancy at birth (years)
+        - WHOSIS_000002 : Healthy life expectancy (HALE) at birth (years)
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
 
     indicators = ["WHOSIS_000001", "WHOSIS_000002"]
@@ -120,12 +110,14 @@ def _fetch_who_data(country_id):
 
 def _fetch_world_bank_data(country_id):
     """
-    Fetches World Bank data for a given country and updates the database.
+    Fetches the indicators SH.DYN.MORT, SH.DYN.MORT.FE, SH.DYN.MORT.MA, SH.DYN.NMRT from World Bank for a given country and updates the database.
+        - SH.DYN.MORT : Mortality rate, under-5 (per 1,000 live births)
+        - SH.DYN.MORT.FE : Mortality rate, under-5, female (per 1,000 live births)
+        - SH.DYN.MORT.MA : Mortality rate, under-5, male (per 1,000 live births)
+        - SH.DYN.NMRT : Mortality rate, neonatal (per 1,000 live births)
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
     indicators = ["SH.DYN.MORT", "SH.DYN.MORT.FE", "SH.DYN.MORT.MA", "SH.DYN.NMRT"]
     try:
@@ -150,12 +142,11 @@ def _fetch_world_bank_data(country_id):
 
 def _fetch_unicef_data(country_list):
     """
-    Fetches UNICEF data for a list of countries and updates the database.
+    Fetches the indicator MMR_100k from UNICEF for a list of countries and updates the database.
+        - MMR_100k : Maternal mortality ratio (modeled estimate, per 100,000 live births)
 
     :param country_list: The list of country IDs to fetch data for.
     :type country_list: list
-    :return: None
-    :rtype: None
     """
     try:
         dataset = webscraping.FetchPageSingle(
@@ -187,14 +178,13 @@ def _fetch_unicef_data(country_list):
 
 ############################################# FONCTIONS SERVICES COVERAGES #############################################
 
+
 def update_list_services_coverages(country_list):
     """
-    Updates the health status for a list of countries by fetching data from WHO and World Bank.
+    Updates the services coverages indicators for a list of countries by fetching data from WHO and World Bank.
 
     :param country_list: List of country IDs to update.
     :type country_list: list
-    :return: None
-    :rtype: None
 
     Examples usage:
         update_list_health_status(['fra', 'dza', 'gbr'])
@@ -211,13 +201,9 @@ def update_list_services_coverages(country_list):
 
         concurrent.futures.wait(futures, timeout=30)
 
-
 def update_all_services_coverages():
     """
-    Updates the health status for all countries by fetching data from various sources.
-
-    :return: None
-    :rtype: None
+    Updates the services coverages indicators for all countries by fetching data from various sources.
     """
     with open("countries.json", "r") as f:
         countries = json.load(f)
@@ -231,15 +217,13 @@ def update_all_services_coverages():
 
     update_list_services_coverages(country_list)
 
-
 def _fetch_hiv_data(country_id):
     """
-    Fetches WHO data for a given country and updates the database.
+    Fetches the indicator HIV_0000000001 from WHO for a given country and updates the database.
+        - HIV_0000000001 : Number of new HIV infections per 1,000 uninfected population, all ages
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
     indicators = ["HIV_0000000001"]
     try:
@@ -261,12 +245,11 @@ def _fetch_hiv_data(country_id):
 
 def _fetch_tuberculosis_data(country_id):
     """
-    Fetches WHO data for a given country and updates the database.
+    Fetches the indicator MDG_0000000020 from WHO for a given country and updates the database.
+        - MDG_0000000020 : Tuberculosis incidence per 100,000 population per year
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
     indicators = ["MDG_0000000020"]
     try:
@@ -288,12 +271,11 @@ def _fetch_tuberculosis_data(country_id):
 
 def _fetch_malaria_data(country_id):
     """
-    Fetches WHO data for a given country and updates the database.
+    Fetches the indicator MALARIA_EST_INCIDENCE from WHO for a given country and updates the database.
+        - MALARIA_EST_INCIDENCE : Estimated incidence rate of malaria (per 1,000 population at risk)
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
     indicators = ["MALARIA_EST_INCIDENCE"]
     try:
@@ -315,12 +297,13 @@ def _fetch_malaria_data(country_id):
 
 def _fetch_immunization_data(country_id):
     """
-    Fetches WHO data for a given country and updates the database.
+    Fetches the indicators WHS3_62, WHS3_41, WHS3_57 from WHO for a given country and updates the database.
+        - WHS3_62 : Immunization coverage among 1-year-olds (%)
+        - WHS3_41 : Immunization coverage among 1-year-olds (%)
+        - WHS3_57 : Immunization coverage among 1-year-olds (%)
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
     indicators = ["WHS3_62","WHS3_41","WHS3_57"]
     try:
@@ -360,8 +343,6 @@ def update_list_risk_factors(country_list):
 
     :param country_list: List of country IDs to update.
     :type country_list: list
-    :return: None
-    :rtype: None
 
     Examples usage:
         update_list_risk_factors(['fra', 'dza', 'gbr'])
@@ -377,14 +358,9 @@ def update_list_risk_factors(country_list):
 
     return
 
-
-
 def update_all_risk_factors():
     """
     Updates the health status for all countries by fetching data from various sources.
-
-    :return: None
-    :rtype: None
     """
     with open("countries.json", "r") as f:
         countries = json.load(f)
@@ -400,10 +376,10 @@ def update_all_risk_factors():
 
     return
 
-
 def _fetch_weight_data(country_list):
     """
-    Fetches UNICEF data for a list of countries and updates the database.
+    Fetches the indicator NT_ANT_WHZ_PO2 from UNICEF for a list of countries and updates the database.
+        - NT_ANT_WHZ_PO2 : Prevalence of wasting, weight-for-height (% of children under 5)
 
     :param country_list: The list of country IDs to fetch data for.
     :type country_list: list
@@ -430,12 +406,11 @@ def _fetch_weight_data(country_list):
 
 def _fetch_drink_safe_data(country_list):
     """
-    Fetches UNICEF data for a list of countries and updates the database.
+    Fetches the indicator WS_PPL_W-PRE from UNICEF for a list of countries and updates the database.
+        - WS_PPL_W-PRE : People using at least basic drinking water services (%)
 
     :param country_list: The list of country IDs to fetch data for.
     :type country_list: list
-    :return: None
-    :rtype: None
     """
     try:
         dataset = webscraping.FetchPageSingle(
@@ -457,12 +432,11 @@ def _fetch_drink_safe_data(country_list):
 
 def _fetch_drink_data(country_list):
     """
-    Fetches UNICEF data for a list of countries and updates the database.
+    Fetches the indicator WS_PPL_W-B from UNICEF for a list of countries and updates the database.
+        - WS_PPL_W-B : People using at least basic drinking water services (%)
 
     :param country_list: The list of country IDs to fetch data for.
     :type country_list: list
-    :return: None
-    :rtype: None
     """
     try:
         dataset = webscraping.FetchPageSingle(
@@ -484,12 +458,11 @@ def _fetch_drink_data(country_list):
 
 def _fetch_birth_data(country_list):
     """
-    Fetches UNICEF data for a list of countries and updates the database.
+    Fetches the indicator NT_BW_LBW from UNICEF for a list of countries and updates the database.
+        - NT_BW_LBW : Prevalence of low birth weight among newborns (%)
 
     :param country_list: The list of country IDs to fetch data for.
     :type country_list: list
-    :return: None
-    :rtype: None
     """
     try:
         dataset = webscraping.FetchPageSingle(
@@ -526,12 +499,10 @@ def _fetch_birth_data(country_list):
 
 def update_list_health_systems(country_list):
     """
-    Updates the risk factors for a list of countries by fetching data from WHO and World Bank.
+    Updates the health systems indicators for a list of countries by fetching data from WHO and World Bank.
 
     :param country_list: List of country IDs to update.
     :type country_list: list
-    :return: None
-    :rtype: None
 
     Examples usage:
         update_list_risk_factors(['fra', 'dza', 'gbr'])
@@ -545,9 +516,6 @@ def update_list_health_systems(country_list):
 def update_all_health_systems():
     """
     Updates the health status for all countries by fetching data from various sources.
-
-    :return: None
-    :rtype: None
     """
     with open("countries.json", "r") as f:
         countries = json.load(f)
@@ -565,12 +533,14 @@ def update_all_health_systems():
 
 def _fetch_health_systems_data(country_id):
     """
-    Fetches WHO data for a given country and updates the database.
+    Fetches the indicators SH.UHC.SRVS.CV.XD, SH.MED.BEDS.ZS, SP.REG.BRTH.ZS, SP.REG.DTHS.ZS from World Bank for a given country and updates the database.
+        - SH.UHC.SRVS.CV.XD : Service coverage index
+        - SH.MED.BEDS.ZS : Hospital beds (per 1,000 people)
+        - SP.REG.BRTH.ZS : Completeness of birth registration (%)
+        - SP.REG.DTHS.ZS : Completeness of death registration with cause-of-death information (%)
 
     :param country_id: The ID of the country to fetch data for.
     :type country_id: str
-    :return: None
-    :rtype: None
     """
 
     indicators = ["SH.UHC.SRVS.CV.XD", "SH.MED.BEDS.ZS","SP.REG.BRTH.ZS","SP.REG.DTHS.ZS"]
@@ -596,9 +566,4 @@ def _fetch_health_systems_data(country_id):
     return
 
 
-
-
-
-
-
-
+########################################################################################################################
