@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+from dash import dcc, html
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -714,6 +715,25 @@ def generate_coverage_status_page(selected_countries_list):
 
 # Code
 def generate_health_systems_page(selected_countries_list, selected_year):
+
+    map_bed_density = get_health_systems_data_bed_density(selected_countries_list, selected_year)
+
+    fig_map = px.choropleth(
+        data_frame = map_bed_density,
+        locations = map_bed_density['id_country'],
+        color = map_bed_density['value'],
+        hover_name = map_bed_density['id_country'],
+        title = f"Hospital Bed Density in {selected_year}",
+        color_continuous_scale = 'Blues',
+        range_color = [0, 10],
+    )
+
+    fig_map.update_layout(
+        coloraxis_showscale = True,
+        coloraxis_colorbar = {"title": "Bed Density", "tickvals": [0, 2, 4, 6, 8, 10], "ticktext": ["0", "2", "4", "6", "8", "10"]},
+        margin={"r":0, "t":50, "l":0, "b":0}
+    )
+
     map = html.Div([
         dcc.Loading(
             id="loading-indicator",  # ID pour l'indicateur de chargement
@@ -722,7 +742,6 @@ def generate_health_systems_page(selected_countries_list, selected_year):
                 dcc.Graph(
                     id="world-map",
                     config={'scrollZoom': True, 'displayModeBar': False},
-                    figure={},  # This initializes the map when the app loads
                     selectedData=None  # We use this property to capture selected country data
                 )
             ]
@@ -814,6 +833,35 @@ def get_health_systems_data_death(selected_countries_list, selected_year) :
 
     return df_death
 
+def get_health_systems_data_bed_density(selected_countries_list, selected_year) :
+
+    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
+
+    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+
+    database_url = os.getenv("BASE_URL")
+    engine = create_engine(database_url)
+
+    with engine.connect() as connection :
+        metadata = MetaData()
+        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
+
+        query= select(indicator_table).where(
+            indicator_table.columns.id_indicator == "SH.MED.BEDS.ZS",
+            indicator_table.columns.id_country.in_(country_codes),
+            indicator_table.columns.year_recorded.between(2000, selected_year)
+        )
+
+        result = connection.execute(query).fetchall()
+        df_bed_density = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
+
+        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
+        df_bed_density["id_country"] = df_bed_density["id_country"].str.lower().map(country_mapping)
+
+    return df_bed_density
+
+
+
 
 
 def update_health_systems_graph_birth(selected_countries_list, selected_year) :
@@ -857,4 +905,9 @@ def update_health_systems_graph_death(selected_countries_list, selected_year) :
 
 
 
-    return row_1
+
+
+
+
+
+
