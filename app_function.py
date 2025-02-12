@@ -716,22 +716,35 @@ def generate_coverage_status_page(selected_countries_list):
 # Code
 def generate_health_systems_page(selected_countries_list, selected_year):
 
-    map_bed_density = get_health_systems_data_bed_density(selected_countries_list, selected_year)
+    map_uhc = get_health_systems_data_uhc(selected_countries_list, selected_year)
+
+    min_value = map_uhc['value'].min()
+    max_value = map_uhc['value'].max()
 
     fig_map = px.choropleth(
-        data_frame = map_bed_density,
-        locations = map_bed_density['id_country'],
-        color = map_bed_density['value'],
-        hover_name = map_bed_density['id_country'],
-        title = f"Hospital Bed Density in {selected_year}",
-        color_continuous_scale = 'Blues',
-        range_color = [0, 10],
+        data_frame=map_uhc,
+        locations=map_uhc['id_country'],
+        color=map_uhc['value'],
+        hover_name=map_uhc['id_country'],
+        title=f"UHC Service Coverage Index ({selected_year})",
+        color_continuous_scale='Blues',
+        range_color=[min_value, max_value],
+        hover_data={'value': True}
+    )
+
+    fig_map.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>UHC Index: %{z}<extra></extra>",
+        hovertext=map_uhc['id_country']
     )
 
     fig_map.update_layout(
-        coloraxis_showscale = True,
-        coloraxis_colorbar = {"title": "Bed Density", "tickvals": [0, 2, 4, 6, 8, 10], "ticktext": ["0", "2", "4", "6", "8", "10"]},
-        margin={"r":0, "t":50, "l":0, "b":0}
+        coloraxis_showscale=True,
+        coloraxis_colorbar={
+            "title": "UHC Index",
+            "tickvals": [min_value, (min_value + max_value) / 2, max_value],
+            "ticktext": [f"{min_value:.0f}", f"{(min_value + max_value) / 2:.0f}", f"{max_value:.0f}"]
+        },
+        margin={"r": 0, "t": 50, "l": 0, "b": 0}
     )
 
     map = html.Div([
@@ -833,7 +846,7 @@ def get_health_systems_data_death(selected_countries_list, selected_year) :
 
     return df_death
 
-def get_health_systems_data_bed_density(selected_countries_list, selected_year) :
+def get_health_systems_data_uhc(selected_countries_list, selected_year) :
 
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
@@ -847,18 +860,18 @@ def get_health_systems_data_bed_density(selected_countries_list, selected_year) 
         indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
 
         query= select(indicator_table).where(
-            indicator_table.columns.id_indicator == "SH.MED.BEDS.ZS",
+            indicator_table.columns.id_indicator == "SH.UHC.SRVS.CV.XD",
             indicator_table.columns.id_country.in_(country_codes),
             indicator_table.columns.year_recorded.between(2000, selected_year)
         )
 
         result = connection.execute(query).fetchall()
-        df_bed_density = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
+        df_uhc = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
 
         country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        df_bed_density["id_country"] = df_bed_density["id_country"].str.lower().map(country_mapping)
+        df_uhc["id_country"] = df_uhc["id_country"].str.lower().map(country_mapping)
 
-    return df_bed_density
+    return df_uhc
 
 
 
