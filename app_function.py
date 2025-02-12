@@ -868,13 +868,17 @@ def update_health_systems_graph_birth(selected_countries_list, selected_year) :
     if selected_countries_list :
         df_birth = get_health_systems_data_birth(selected_countries_list, selected_year)
 
+        df_birth = df_birth.dropna(subset=["year_recorded", "value", "id_country"])
+
         # Création du graphique
         fig = px.line(
             data_frame = df_birth,
             x = "year_recorded",
             y = "value",
             color = "id_country",
-            title = f"Birth rate from 2000 to {selected_year}"
+            title = f"Birth rate from 2000 to {selected_year}",
+            markers=True,
+            #hover_name = {"year_recorded": True, "value": True}
         )
     else :
         fig = {}
@@ -885,12 +889,16 @@ def update_health_systems_graph_death(selected_countries_list, selected_year) :
     if selected_countries_list :
         df_death = get_health_systems_data_death(selected_countries_list, selected_year)
 
+        df_death = df_death.dropna(subset=["year_recorded", "value", "id_country"])
+
         fig = px.line(
             data_frame = df_death,
             x = "year_recorded",
             y = "value",
             color = "id_country",
-            title = f"Death rate from 2000 to {selected_year}"
+            title = f"Death rate from 2000 to {selected_year}",
+            markers=True,
+            #hover_data={"year_recorded": True, "value": True}
         )
     else :
         fig = {}
