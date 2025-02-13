@@ -1,5 +1,6 @@
 import json
 import os
+from types import NoneType
 
 from flask import Flask
 from flask_caching import Cache
@@ -23,6 +24,8 @@ server = Flask(__name__)
 
 # Initialise Dash app with Bootstrap CSS and suppress callback exceptions
 app = dash.Dash(__name__,
+                title="HealthScope Info",
+                update_title="Loading...",
                 server=server,
                 external_stylesheets=[dbc.themes.BOOTSTRAP],
                 suppress_callback_exceptions=True)
@@ -32,7 +35,7 @@ selected_countries_list = []
 selected_geojson_data = {}
 
 # Initialise delfault year selected
-selected_year = 2008
+selected_year = [2008,2020]
 
 # Initial default title page
 title_page = "Health Status Indicators"
@@ -108,11 +111,12 @@ app.layout = html.Div([
             # ******************************* Date Picker ************************************
             html.Div([
                 # Dynamic Date Text using the callback function update_date()
+                dcc.Store(id='date-store',data=selected_year),
                 html.H3(id="date-display", style={'fontSize': '1.25rem', 'fontWeight': 'bold'}),
 
                 # Date Slider
                 html.Div([
-                    dcc.Slider(min=2000,max=2025,step=1,
+                    dcc.RangeSlider(min=2000,max=2025,step=1,
                         marks={2000: '2000', 2025: '2025'},
                         value=selected_year,
                         tooltip={"placement": "bottom", "always_visible": True},
@@ -178,6 +182,7 @@ app.layout = html.Div([
 
 @app.callback(
     Output("date-display", "children"),
+    Output("date-store", "data"),
     Input("date-slider", "value")
 )
 def update_date(new_selected_year):
@@ -189,7 +194,7 @@ def update_date(new_selected_year):
         - Input: id = **date-slider** Receives the selected year from the `date-slider`.
 
     :param new_selected_year: The year selected from the date slider.
-    :type new_selected_year: int
+    :type new_selected_year: list[int,int]
 
     :return: The selected year as a string.
     :rtype: str
@@ -198,11 +203,11 @@ def update_date(new_selected_year):
 
     selected_year = new_selected_year
 
-    return f"{selected_year}"
+    return f"{selected_year[0]} - {selected_year[1]}", selected_year
 
 
 @app.callback(
-    Output("page-content", "children"),  # Update the title dynamically
+    Output("page-content", "children"),
         Output("maximum-alert", "children"),
         Output("status-page", "children"),
         Output("intermediate-value", "data"),
@@ -212,6 +217,7 @@ def update_date(new_selected_year):
         Input("service-btn", "n_clicks"),
         Input("healthsys-btn", "n_clicks"),
         Input("remove-countries-btn", "n_clicks"),
+        Input("date-store", "data")
     ] + [
         Input(country["alpha3"], "n_clicks")
         for region in country_data["regions"]
@@ -244,13 +250,16 @@ def update_page_and_countries(*args):
     global title_page
     global selected_countries_list
 
+    if not isinstance(selected_countries_list, list):
+        selected_countries_list = []
+
     # Initialize alert message to an empty string
     alert = ""
 
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
     # If a trigger source is detected
-    if ctx.triggered:
-        # Get the ID of the trigger source
-        triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if triggered_id != "date-store":
 
         # Check the trigger source
         match triggered_id:
@@ -312,7 +321,11 @@ def update_page_and_countries(*args):
                     selected_countries_list[:] = [c for c in selected_countries_list if c["alpha3"] != selected_alpha3]
 
     # Generate country text
-    countries = ", ".join([c["name"] for c in selected_countries_list]) if selected_countries_list else "No countries selected"
+    if selected_countries_list == None or selected_countries_list == {NoneType}:
+        countries = "No countries selected"
+    else :
+        countries = ", ".join([c["name"] for c in selected_countries_list])
+    print(countries)
 
     return (
         html.H4(f"{title_page} : {countries}"),
@@ -449,3 +462,5 @@ def display_status_page():
 # Run the Dash app
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
+    #app.run_server(debug=True)
+
