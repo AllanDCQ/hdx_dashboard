@@ -2,8 +2,3 @@ services:
   - type: web
     name: hdx-dash-app
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:server --bind 0.0.0.0:8080"
-    envVars:
-      - key: PORT
-        value: 8080

@@ -419,6 +419,7 @@ def display_status_page():
     match title_page:
         case "Health Status Indicators":
             return af.generate_health_status_page(selected_countries_list,selected_year)
+
         case "Risk Factors Indicators":
             return af.generate_factors_risk_status_page(selected_countries_list)
 
@@ -445,7 +446,6 @@ def display_status_page():
 
 #######################################################################################
 
-port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=port, debug=False)
+    app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
