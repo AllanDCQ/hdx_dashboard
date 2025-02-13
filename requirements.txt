@@ -8,3 +8,4 @@ flask<3.1
 gunicorn~=23.0.0
 flask-caching~=2.3.0
 beautifulsoup4~=4.13.3
+sqlalchemy~=2.0.38
