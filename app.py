@@ -14,6 +14,7 @@ import numpy as np
 import app_function as af
 
 import plotly.graph_objects as go
+import plotly.express as px
 import pandas as pd
 
 
@@ -325,7 +326,6 @@ def update_page_and_countries(*args):
         countries = "No countries selected"
     else :
         countries = ", ".join([c["name"] for c in selected_countries_list])
-    print(countries)
 
     return (
         html.H4(f"{title_page} : {countries}"),
@@ -362,7 +362,9 @@ def update_map(*args):
     fig = go.Figure()
     locations = []
     z = []
+    colors = []
     hovertext = None
+    colorscale = [[0, "lightgray"], [1, "lightgray"]]  # Default color scale
 
     if selected_countries_list:
         selected_df = pd.DataFrame(selected_countries_list)
@@ -381,10 +383,17 @@ def update_map(*args):
         # Update geo_df for selection status
         geo_df["selected"] = np.where(geo_df["CODE"].isin(selected_df["alpha3"]), 1, 0)
 
+        color_palette = px.colors.qualitative.Plotly
+        num_colors = len(selected_countries_list)
+        country_z_values = {selected_countries_list[i]["alpha3"]: i for i in range(num_colors)}
+
         map = selected_geojson_data
         locations = geo_df["CODE"]
-        z = geo_df["selected"]
+        z = [country_z_values[code] if code in country_z_values else None for code in locations]
         hovertext = geo_df["NAME"]
+
+        colorscale = [[i / max(1, num_colors - 1), color_palette[i % len(color_palette)]] for i in range(num_colors)]
+        print(colorscale)
     else:
         map = geojson_data
 
@@ -394,7 +403,7 @@ def update_map(*args):
         geojson=map,  # Use the filtered GeoJSON
         locations=locations,
         z=z,
-        colorscale=["lightgray", "lightgray"],  # Light gray for non-selected, red for selected
+        colorscale=colorscale,
         marker=dict(opacity=0.6, line=dict(color='red', width=2)),
         showscale=False,  # Hide the color scale
         featureidkey="properties.CODE",

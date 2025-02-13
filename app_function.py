@@ -6,6 +6,7 @@ import os
 from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
 
+color_palette = px.colors.qualitative.Plotly
 
 def generate_country_menu(country_data):
     """
@@ -192,6 +193,7 @@ def update_MMR100k_graph(selected_countries_list, selected_year):
     :return: A Dash Graph component with the updated MMR100k data.
     :rtype: dash.development.base_component.Component
     """
+    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
 
     if selected_countries_list:
         df = get_MMR100k_data(selected_countries_list, selected_year)
@@ -200,6 +202,7 @@ def update_MMR100k_graph(selected_countries_list, selected_year):
             data_frame=df,
             x="year_recorded",  # Modifier selon ta colonne contenant les années
             y="value",  # Modifier selon ta colonne contenant les valeurs
+            color_discrete_map=country_to_color,
             color="id_country",  # Différencier les courbes par pays
             custom_data=["id_country"],
             color_discrete_sequence=px.colors.qualitative.G10,
@@ -286,6 +289,7 @@ def update_WHOSIS_000001_graph(selected_countries_list, selected_year):
     :return: A Dash Graph component with the updated WHOSIS_000001 data.
     :rtype: dash.development.base_component.Component
     """
+    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
 
     if selected_countries_list:
         df = get_WHOSIS_000001_data(selected_countries_list, selected_year)
@@ -294,6 +298,7 @@ def update_WHOSIS_000001_graph(selected_countries_list, selected_year):
             data_frame=df,
             x="year_recorded",  # Modifier selon ta colonne contenant les années
             y="value",  # Modifier selon ta colonne contenant les valeurs
+            color_discrete_map=country_to_color,
             color="id_country",  # Différencier les courbes par pays
             custom_data=["id_country"],
             color_discrete_sequence=px.colors.qualitative.G10,
@@ -382,6 +387,8 @@ def update_WHOSIS_000002_graph(selected_countries_list, selected_year):
     :rtype: dash.development.base_component.Component
     """
 
+    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
+
     if selected_countries_list:
         df = get_WHOSIS_000002_data(selected_countries_list, selected_year)
         # Création du graphique avec Plotly
@@ -389,6 +396,7 @@ def update_WHOSIS_000002_graph(selected_countries_list, selected_year):
             data_frame= df,
             x="year_recorded",  # Modifier selon ta colonne contenant les années
             y="value",  # Modifier selon ta colonne contenant les valeurs
+            color_discrete_map=country_to_color,
             color="id_country",
             custom_data=["id_country"],
             color_discrete_sequence=px.colors.qualitative.G10,
@@ -475,6 +483,8 @@ def update_SH_DYN_MORT_graph(selected_countries_list, selected_year):
     :rtype: dash.development.base_component.Component
     """
 
+    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
+
     if selected_countries_list:
         # Récupérer les données pour les filles et les garçons
         df = get_SH_DYN_MORT_data(selected_countries_list, selected_year)
@@ -496,6 +506,7 @@ def update_SH_DYN_MORT_graph(selected_countries_list, selected_year):
             data_frame=df_combined,
             x="year_recorded",  # Année sur l'axe des X
             y="value",  # Taux de mortalité sur l'axe des Y
+            color_discrete_map=country_to_color,
             color="id_country",  # Différencier les barres par pays
             barmode="group",  # Afficher les barres côte à côte
             custom_data=["id_country", "gender"],
@@ -583,6 +594,7 @@ def update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year):
     :return: A Dash Graph component with the updated SH_DYN_MORT_neo data.
     :rtype: dash.development.base_component.Component
     """
+    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
 
     if selected_countries_list:
         # Récupérer les données de mortalité néonatale
@@ -590,13 +602,13 @@ def update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year):
 
         # Filtrer les données pour la mortalité néonatale (identifiant 'SH.DYN.NMRT')
         df_neonatal = df[df['id_indicator'] == 'SH.DYN.NMRT']
-        df_neonatal = df_neonatal.sort_values("id_country")
 
         # Création du graphique en ligne avec Plotly
         fig = px.line(
             data_frame=df_neonatal,
             x="year_recorded",  # Année sur l'axe des X
             y="value",  # Taux de mortalité néonatale sur l'axe des Y
+            color_discrete_map=country_to_color,
             color="id_country",  # Différencier les lignes par pays
             markers=True,  # Ajouter des marqueurs pour chaque point de donnée
             custom_data=["id_country"],  # Données supplémentaires pour le survol
