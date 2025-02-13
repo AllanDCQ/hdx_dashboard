@@ -156,7 +156,7 @@ def get_MMR100k_data(selected_countries_list, selected_year):
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
 
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection:
@@ -253,7 +253,7 @@ def get_WHOSIS_000001_data(selected_countries_list, selected_year):
 
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection:
@@ -352,7 +352,7 @@ def get_WHOSIS_000002_data(selected_countries_list, selected_year):
 
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection:
@@ -451,7 +451,7 @@ def get_SH_DYN_MORT_data(selected_countries_list, selected_year):
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
 
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection:
@@ -564,7 +564,7 @@ def get_SH_DYN_MORT_neo_data(selected_countries_list, selected_year):
 
 
 
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection:
