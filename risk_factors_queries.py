@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, MetaData, Table, select, and_
 import pandas as pd
 
-DATABASE_URL = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+DATABASE_URL = "sqlite:///../data/who.db"
 
 # Dictionnaire de correspondance code <-> libellé réel
 INDICATORS_MAPPING = {
