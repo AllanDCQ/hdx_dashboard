@@ -1,5 +1,6 @@
 import json
 import os
+from types import NoneType
 
 from flask import Flask
 from flask_caching import Cache
@@ -13,6 +14,7 @@ import numpy as np
 import app_function as af
 
 import plotly.graph_objects as go
+import plotly.express as px
 import pandas as pd
 
 
@@ -23,6 +25,8 @@ server = Flask(__name__)
 
 # Initialise Dash app with Bootstrap CSS and suppress callback exceptions
 app = dash.Dash(__name__,
+                title="HealthScope Info",
+                update_title="Loading...",
                 server=server,
                 external_stylesheets=[dbc.themes.BOOTSTRAP],
                 suppress_callback_exceptions=True)
@@ -32,7 +36,7 @@ selected_countries_list = []
 selected_geojson_data = {}
 
 # Initialise delfault year selected
-selected_year = 2008
+selected_year = [2015,2020]
 
 # Initial default title page
 title_page = "Health Status Indicators"
@@ -108,11 +112,12 @@ app.layout = html.Div([
             # ******************************* Date Picker ************************************
             html.Div([
                 # Dynamic Date Text using the callback function update_date()
+                dcc.Store(id='date-store',data=selected_year),
                 html.H3(id="date-display", style={'fontSize': '1.25rem', 'fontWeight': 'bold'}),
 
                 # Date Slider
                 html.Div([
-                    dcc.Slider(min=2000,max=2025,step=1,
+                    dcc.RangeSlider(min=2000,max=2025,step=1,
                         marks={2000: '2000', 2025: '2025'},
                         value=selected_year,
                         tooltip={"placement": "bottom", "always_visible": True},
@@ -178,6 +183,7 @@ app.layout = html.Div([
 
 @app.callback(
     Output("date-display", "children"),
+    Output("date-store", "data"),
     Input("date-slider", "value")
 )
 def update_date(new_selected_year):
@@ -189,7 +195,7 @@ def update_date(new_selected_year):
         - Input: id = **date-slider** Receives the selected year from the `date-slider`.
 
     :param new_selected_year: The year selected from the date slider.
-    :type new_selected_year: int
+    :type new_selected_year: list[int,int]
 
     :return: The selected year as a string.
     :rtype: str
@@ -198,11 +204,11 @@ def update_date(new_selected_year):
 
     selected_year = new_selected_year
 
-    return f"{selected_year}"
+    return f"{selected_year[0]} - {selected_year[1]}", selected_year
 
 
 @app.callback(
-    Output("page-content", "children"),  # Update the title dynamically
+    Output("page-content", "children"),
         Output("maximum-alert", "children"),
         Output("status-page", "children"),
         Output("intermediate-value", "data"),
@@ -212,6 +218,7 @@ def update_date(new_selected_year):
         Input("service-btn", "n_clicks"),
         Input("healthsys-btn", "n_clicks"),
         Input("remove-countries-btn", "n_clicks"),
+        Input("date-store", "data")
     ] + [
         Input(country["alpha3"], "n_clicks")
         for region in country_data["regions"]
@@ -244,13 +251,16 @@ def update_page_and_countries(*args):
     global title_page
     global selected_countries_list
 
+    if not isinstance(selected_countries_list, list):
+        selected_countries_list = []
+
     # Initialize alert message to an empty string
     alert = ""
 
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
     # If a trigger source is detected
-    if ctx.triggered:
-        # Get the ID of the trigger source
-        triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if triggered_id != "date-store":
 
         # Check the trigger source
         match triggered_id:
@@ -312,7 +322,10 @@ def update_page_and_countries(*args):
                     selected_countries_list[:] = [c for c in selected_countries_list if c["alpha3"] != selected_alpha3]
 
     # Generate country text
-    countries = ", ".join([c["name"] for c in selected_countries_list]) if selected_countries_list else "No countries selected"
+    if selected_countries_list == None or selected_countries_list == {NoneType}:
+        countries = "No countries selected"
+    else :
+        countries = ", ".join([c["name"] for c in selected_countries_list])
 
     return (
         html.H4(f"{title_page} : {countries}"),
@@ -343,13 +356,18 @@ def update_map(*args):
     :rtype: plotly.graph_objects.Figure
     """
 
+    if title_page == "Health Systems":
+        return update_map_health_systems()
+
     global selected_countries_list
     global selected_geojson_data
 
     fig = go.Figure()
     locations = []
     z = []
+    colors = []
     hovertext = None
+    colorscale = [[0, "lightgray"], [1, "lightgray"]]  # Default color scale
 
     if selected_countries_list:
         selected_df = pd.DataFrame(selected_countries_list)
@@ -368,10 +386,17 @@ def update_map(*args):
         # Update geo_df for selection status
         geo_df["selected"] = np.where(geo_df["CODE"].isin(selected_df["alpha3"]), 1, 0)
 
+        color_palette = px.colors.qualitative.Plotly
+        num_colors = len(selected_countries_list)
+        country_z_values = {selected_countries_list[i]["alpha3"]: i for i in range(num_colors)}
+
         map = selected_geojson_data
         locations = geo_df["CODE"]
-        z = geo_df["selected"]
+        z = [country_z_values[code] if code in country_z_values else None for code in locations]
         hovertext = geo_df["NAME"]
+
+        colorscale = [[i / max(1, num_colors - 1), color_palette[i % len(color_palette)]] for i in range(num_colors)]
+        print(colorscale)
     else:
         map = geojson_data
 
@@ -381,7 +406,7 @@ def update_map(*args):
         geojson=map,  # Use the filtered GeoJSON
         locations=locations,
         z=z,
-        colorscale=["lightgray", "lightgray"],  # Light gray for non-selected, red for selected
+        colorscale=colorscale,
         marker=dict(opacity=0.6, line=dict(color='red', width=2)),
         showscale=False,  # Hide the color scale
         featureidkey="properties.CODE",
@@ -404,8 +429,40 @@ def update_map(*args):
     return fig
 
 
-# Code qui permet de relire au fichier risk_factors_graphs.py pour afficher les differents graphiques
-import risk_factors_graphs as rfg
+def update_map_health_systems() :
+
+    map_uhc = af.get_health_systems_data_uhc(selected_countries_list, selected_year)
+
+    min_value = map_uhc['value'].min()
+    max_value = map_uhc['value'].max()
+
+    fig_map = px.choropleth(
+        data_frame=map_uhc,
+        locations=map_uhc['id_country'],
+        color=map_uhc['value'],
+        hover_name=map_uhc['id_country'],
+        title=f"UHC Service Coverage Index ({selected_year[0]} - {selected_year[1]})",
+        color_continuous_scale='Blues',
+        range_color=[min_value, max_value],
+        hover_data={'value': True}
+    )
+
+    fig_map.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>UHC Index: %{z}<extra></extra>",
+        hovertext=map_uhc['id_country']
+    )
+
+    fig_map.update_layout(
+        coloraxis_showscale=True,
+        coloraxis_colorbar={
+            "title": "UHC Index",
+            "tickvals": [min_value, (min_value + max_value) / 2, max_value],
+            "ticktext": [f"{min_value:.0f}", f"{(min_value + max_value) / 2:.0f}", f"{max_value:.0f}"]
+        },
+        margin={"r": 0, "t": 50, "l": 0, "b": 0}
+    )
+
+    return fig_map
 
 def display_status_page():
     """
@@ -422,14 +479,16 @@ def display_status_page():
     #CODE adapté pour permettre de gere le fichier risk_factors_graphs.py
     match title_page:
         case "Health Status Indicators":
-            return af.generate_health_status_page(selected_countries_list, selected_year)
+            return af.generate_health_status_page(selected_countries_list,selected_year)
+
         case "Risk Factors Indicators":
             country_codes = [c["alpha3"].lower() for c in selected_countries_list]  # <- Convertir en minuscules
             return rfg.generate_risk_factors_page(selected_year, country_codes)
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page(selected_countries_list)
         case "Health Systems":
-            return af.generate_health_systems_page(selected_countries_list)
+            return af.generate_health_systems_page(selected_countries_list,selected_year)
+
         case _:
             return None
 
@@ -447,7 +506,8 @@ def display_status_page():
 
 #######################################################################################
 
-port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
 if __name__ == "__main__":
-    app.run_server( debug=True)
+    app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
+    #app.run_server(debug=True)
+

@@ -1,9 +1,4 @@
 services:
   - type: web
-    name: my-dash-app
+    name: hdx-dash-app
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python app.py"
-    envVars:
-      - key: PORT
-        value: 8080
