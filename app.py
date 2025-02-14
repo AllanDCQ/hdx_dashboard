@@ -18,9 +18,7 @@ import plotly.express as px
 import pandas as pd
 
 # Définir la variable d'environnement DATABASE_URL
-os.environ["DATABASE_URL"] = "sqlite:///data/who.db"
-
-
+os.environ["DATABASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
 
 # Create a Flask server

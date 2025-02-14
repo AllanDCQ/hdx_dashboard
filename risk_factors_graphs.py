@@ -15,7 +15,7 @@ def generate_risk_factors_page(selected_year, country_codes):
     # Récupération des noms des pays
     country_names = get_country_names()
     df['country_name'] = df['id_country'].map(country_names)
-
+    
     # Création des graphiques
     # 1. Graphique en haut à droite - Line plot pour Weight-for-height
     weight_height_df = df[df['id_indicator'] == 'NT_ANT_WHZ_PO2']
@@ -28,36 +28,116 @@ def generate_risk_factors_page(selected_year, country_codes):
                    title=INDICATORS_MAPPING['NT_ANT_WHZ_PO2'],
                    markers=True,
                    line_shape='linear')
-
+    
     # Ajustement du titre pour qu'il passe à la ligne
-    fig1.update_layout(title={'text': INDICATORS_MAPPING['NT_ANT_WHZ_PO2'], 'yanchor': 'top', 'y': 0.95, 'xanchor': 'center', 'x': 0.5})
-
+    fig1.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['NT_ANT_WHZ_PO2'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Value',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    
     # 2-4. Les trois graphiques en bas
-    figures_bottom = [
-        px.bar(df[df['id_indicator'] == 'NT_BW_LBW'],
-               x='country_name',
-               y='value',
-               color='year_recorded',
-               title=INDICATORS_MAPPING['NT_BW_LBW']),
-        
-        px.scatter(df[df['id_indicator'] == 'WS_PPL_W-PRE'],
-                   x='year_recorded',
-                   y='value',
-                   size='value',
-                   color='country_name',
-                   title=INDICATORS_MAPPING['WS_PPL_W-PRE']),
-        
-        px.box(df[df['id_indicator'] == 'WS_PPL_W-B'],
-               x='country_name',
-               y='value',
-               color='year_recorded',
-               title=INDICATORS_MAPPING['WS_PPL_W-B'])
-    ]
-
-    # Ajustement des titres pour qu'ils puissent passer à la ligne
-    for fig in figures_bottom:
-        fig.update_layout(title={'text': fig.layout.title.text, 'yanchor': 'top', 'y': 0.95, 'xanchor': 'center', 'x': 0.5})
-
+    figures_bottom = []
+    
+    # Graphique en barres groupées pour la prévalence de bas poids chez les nouveau-nés
+    lbw_df = df[df['id_indicator'] == 'NT_BW_LBW']
+    fig_lbw = px.bar(lbw_df,
+                     x='year_recorded',
+                     y='value',
+                     color='country_name',
+                     barmode='group',
+                     title=INDICATORS_MAPPING['NT_BW_LBW'])
+    fig_lbw.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['NT_BW_LBW'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Proportion (%)',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        bargap=0.15,  # Espacement entre les barres des pays
+        bargroupgap=0.1  # Espacement entre les barres des années
+    )
+    figures_bottom.append(fig_lbw)
+    
+    # Graphique en nuage de points pour la proportion de population ayant accès à l'eau potable sûre
+    wpre_df = df[df['id_indicator'] == 'WS_PPL_W-PRE']
+    fig_wpre = px.scatter(wpre_df,
+                          x='year_recorded',
+                          y='value',
+                          size='value',
+                          color='country_name',
+                          title=INDICATORS_MAPPING['WS_PPL_W-PRE'])
+    fig_wpre.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['WS_PPL_W-PRE'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Proportion (%)',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    figures_bottom.append(fig_wpre)
+    
+    # Graphique en histogramme pour la proportion de population ayant accès à l'eau potable de base
+    wb_df = df[df['id_indicator'] == 'WS_PPL_W-B']
+    fig_wb = px.histogram(wb_df,
+                          x='year_recorded',
+                          y='value',
+                          color='country_name',
+                          barmode='group',
+                          title=INDICATORS_MAPPING['WS_PPL_W-B'],
+                          labels={'year_recorded': 'Year', 'value': 'Proportion (%)', 'country_name': 'Country'},
+                          category_orders={"year_recorded": sorted(wb_df['year_recorded'].unique())})
+    fig_wb.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['WS_PPL_W-B'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Proportion (%)',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        bargap=0.15,  # Espacement entre les barres des années
+        bargroupgap=0.1  # Espacement entre les barres des pays
+    )
+    figures_bottom.append(fig_wb)
+    
     # Création du layout avec la carte existante
     map_div = html.Div([
         dcc.Loading(
@@ -72,22 +152,32 @@ def generate_risk_factors_page(selected_year, country_codes):
                 )
             ]
         )
-    ], style={'width': '50%', 'height': '40vh', 'marginRight': '20px'})
-
+    ], style={'width': '100%', 'height': '40vh', 'marginBottom': '60px'})  # Augmentation de marginBottom pour décaler la carte
+    
     # Layout complet
     return [
-        # Première rangée avec la carte et le premier graphique
+        # Première rangée avec la carte
         html.Div([
-            map_div,
-            dbc.Col(dbc.Card(dbc.CardBody(
-                dcc.Graph(figure=fig1)
-            )), width=6, style={'marginLeft': '20px'})
+            map_div
         ], style={'display': 'flex', 'flexDirection': 'row', 'marginBottom': '20px'}),
         
-        # Deuxième rangée avec les trois graphiques
+        # Deuxième rangée avec deux graphiques
         html.Div([
             dbc.Col(dbc.Card(dbc.CardBody(
-                dcc.Graph(figure=fig)
-            )), width=4, style={'marginLeft': '20px', 'marginRight': '20px'}) for fig in figures_bottom
-        ], style={'display': 'flex', 'justifyContent': 'space-between'})
+                dcc.Graph(figure=figures_bottom[0])
+            )), width=6, style={'marginRight': '20px'}),
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=figures_bottom[1])
+            )), width=6)
+        ], style={'display': 'flex', 'flexDirection': 'row', 'marginTop': '60px'}),  # Augmentation de marginTop pour décaler les graphiques
+        
+        # Troisième rangée avec deux graphiques
+        html.Div([
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=figures_bottom[2])
+            )), width=6, style={'marginRight': '20px'}),
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=fig1)
+            )), width=6)
+        ], style={'display': 'flex', 'flexDirection': 'row', 'marginTop': '40px'})  # Augmentation de marginTop pour décaler les graphiques
     ]

@@ -1,13 +1,13 @@
 from sqlalchemy import create_engine, MetaData, Table, select, and_
 import pandas as pd
 
-DATABASE_URL = "sqlite:///../data/who.db"
+DATABASE_URL = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
 
 # Dictionnaire de correspondance code <-> libellé réel
 INDICATORS_MAPPING = {
     "NT_ANT_WHZ_PO2": "Weight-for-height >+2 SD (overweight)",
-    "NT_BW_LBW": "Prevalence of low birth weight among <br>new-borns",
-    "WS_PPL_W-PRE": "Proportion of population using safely managed drinking water services",
+    "NT_BW_LBW": "Prevalence of low birth weight among <br> new-borns",
+    "WS_PPL_W-PRE": "Proportion of population using safely managed <br> drinking water services",
     "WS_PPL_W-B": "Proportion of population using basic drinking water services"
 }
 
