@@ -889,7 +889,7 @@ def update_health_systems_graph_birth(selected_countries_list, selected_year) :
             x = "year_recorded",
             y = "value",
             color = "id_country",
-            title = f"Birth rate from 2000 to {selected_year}",
+            title = f"Completeness of birth registration from 2000 to {selected_year}",
             markers=True,
             #hover_name = {"year_recorded": True, "value": True}
         )
@@ -909,7 +909,7 @@ def update_health_systems_graph_death(selected_countries_list, selected_year) :
             x = "year_recorded",
             y = "value",
             color = "id_country",
-            title = f"Death rate from 2000 to {selected_year}",
+            title = f"Completeness of death registration from 2000 to {selected_year}",
             markers=True,
             #hover_data={"year_recorded": True, "value": True}
         )
