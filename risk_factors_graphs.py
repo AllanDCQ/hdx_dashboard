@@ -20,8 +20,9 @@ def generate_risk_factors_page(selected_year, country_codes):
                    x='year_recorded', 
                    y='value',
                    color='id_country',
-                   title=INDICATORS_MAPPING['NT_ANT_WHZ_PO2'])
-
+                   title=INDICATORS_MAPPING['NT_ANT_WHZ_PO2'],
+                   markers=True,  # Ajoute les points sur la ligne
+                   line_shape='linear')  # Type de ligne entre les points
     # 2-4. Les trois graphiques en bas
     figures_bottom = [
         px.bar(df[df['id_indicator'] == 'NT_BW_LBW'],
@@ -31,7 +32,7 @@ def generate_risk_factors_page(selected_year, country_codes):
                title=INDICATORS_MAPPING['NT_BW_LBW']),
         
         px.scatter(df[df['id_indicator'] == 'WS_PPL_W-PRE'],
-                  x='Year',
+                  x='year_recorded',
                   y='value',
                   size='value',
                   color='id_country',
