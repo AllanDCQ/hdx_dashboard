@@ -431,7 +431,6 @@ def update_map(*args):
 
 def update_map_health_systems() :
 
-
     map_uhc = af.get_health_systems_data_uhc(selected_countries_list, selected_year)
 
     min_value = map_uhc['value'].min()
