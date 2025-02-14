@@ -1,8 +1,7 @@
 from sqlalchemy import create_engine, MetaData, Table, select, and_
 import pandas as pd
-import dash_bootstrap_components as dbc
 
-DATABASE_URL = ""
+DATABASE_URL = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
 
 # Dictionnaire de correspondance code <-> libellé réel
 INDICATORS_MAPPING = {
@@ -13,11 +12,6 @@ INDICATORS_MAPPING = {
 }
 
 def get_risk_factors_data(country_codes=None):
-    #modification ici
-    if country_codes:
-        # Il faut convertir les codes en minuscules pour correspondre à la BD
-        country_codes = [code.lower() for code in country_codes]  # <- Ajoutez cette ligne
-
     """
     Récupère les données des facteurs de risque.
     Si country_codes est fourni, ne récupère que ces pays.
@@ -32,23 +26,24 @@ def get_risk_factors_data(country_codes=None):
     except KeyError:
         print("La table 'Timed_Indicators' n'a pas été trouvée dans la base de données.")
         return pd.DataFrame()
-
+    
     # Constitution du ou des filtres
     indicator_filter = timed_indicators.c.id_indicator.in_(INDICATORS_MAPPING.keys())
     if country_codes:
+        country_codes = [code.lower() for code in country_codes]  # Convertir en minuscules
         country_filter = timed_indicators.c.id_country.in_(country_codes)
         final_filter = and_(country_filter, indicator_filter)
     else:
         final_filter = indicator_filter
-
+    
     stmt = select(
-            timed_indicators.c.id_country,
-            timed_indicators.c.year_recorded,
-            timed_indicators.c.id_indicator,
-            timed_indicators.c.value,
-            timed_indicators.c.sexe
-        ).where(final_filter)
-
+        timed_indicators.c.id_country,
+        timed_indicators.c.year_recorded,
+        timed_indicators.c.id_indicator,
+        timed_indicators.c.value,
+        timed_indicators.c.sexe
+    ).where(final_filter)
+    
     try:
         with engine.connect() as conn:
             df = pd.read_sql(stmt, conn)
@@ -57,7 +52,27 @@ def get_risk_factors_data(country_codes=None):
         print(f"Erreur lors de l'exécution de la requête : {e}")
         return pd.DataFrame()
 
-        
+def get_country_names():
+    """
+    Récupère les noms des pays depuis la base de données.
+    Retourne un dictionnaire {id_country: country_name}.
+    """
+    engine = create_engine(DATABASE_URL)
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+
+    try:
+        country_table = metadata.tables['Country']
+    except KeyError:
+        print("La table 'Country' n'a pas été trouvée dans la base de données.")
+        return {}
+
+    stmt = select(country_table.c.id_country, country_table.c.country_name)
+    with engine.connect() as conn:
+        result = conn.execute(stmt).fetchall()
+
+    return {row[0]: row[1] for row in result}
+
 def get_available_years_and_countries():
     """
     Récupère les années et les pays disponibles dans la base de données.
@@ -71,7 +86,7 @@ def get_available_years_and_countries():
     except KeyError:
         print("La table 'Timed_Indicators' n'a pas été trouvée dans la base de données.")
         return [], []
-
+    
     with engine.connect() as conn:
         years = conn.execute(select(timed_indicators.c.year_recorded.distinct())).fetchall()
         countries = conn.execute(select(timed_indicators.c.id_country.distinct())).fetchall()
@@ -79,7 +94,6 @@ def get_available_years_and_countries():
     years = [year[0] for year in years]
     countries = [country[0] for country in countries]
     return years, countries
-
 
 if __name__ == "__main__":
     df = get_risk_factors_data()  # Sans paramètre country_codes
@@ -100,7 +114,7 @@ if __name__ == "__main__":
         print(df.head().to_string(index=False))
     else:
         print("❌ Aucune donnée trouvée")
-
+    
     years, countries = get_available_years_and_countries()
     print("\nAnnées disponibles :", years)
     print("Pays disponibles :", countries)
