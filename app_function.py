@@ -2,13 +2,10 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
+import plotly.graph_objects as go 
 import os
 
 from sqlalchemy import select, create_engine, MetaData, Table, and_
-from dash import dcc, html
-
-color_palette = px.colors.qualitative.Plotly
 
 def generate_country_menu(country_data):
     """
@@ -69,582 +66,31 @@ def get_country_name_by_alpha3(alpha3, country_data):
                  if isinstance(country, dict) and country["alpha3"] == alpha3), None)
 
 
+def generate_health_status_page(selected_countries_list):
 
-
-
-#################################################### Health Status Page ################################################
-
-
-def generate_health_status_page(selected_countries_list, selected_year):
-    """
-    Generate the health status page layout.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: The layout of the health status page.
-    :rtype: dash.development.base_component.Component
-    """
-
-    graph3=update_MMR100k_graph(selected_countries_list, selected_year)
-    graph4=update_SH_DYN_MORT_graph(selected_countries_list, selected_year)
-    graph5=update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year)
-    # Colonne de gauche contenant la carte
-    map_column = html.Div([
-        # Div pour la carte
-        html.Div([
-            dcc.Loading(
-                id="loading-indicator",
-                type="circle",
-                children=[
-                    dcc.Graph(
-                        id="world-map",
-                        config={'scrollZoom': True, 'displayModeBar': False},
-                        figure={},
-                        selectedData=None,
-                        style={'height': '40vh', 'width': '100%'}
-                    )
-                ]
-            ),
-            graph3
-
-        ], style={'width': '50vh', 'height': '100vh', 'display': 'inline-block',
-                  'verticalAlign': 'top', 'overflow': 'hidden'}),
-
-        # Graphiques (droite)
-        html.Div([
-            graph4,
-            graph5
-        ], style={'width': '60%', 'height': '40vh', 'display': 'inline-block', 'paddingLeft': '10px'})
-    ], style={'display': 'flex', 'width': '100%', 'padding': '2px'})
-
-    # Génération des graphiques
-    graph1 = update_WHOSIS_000001_graph(selected_countries_list, selected_year)
-    graph2 = update_WHOSIS_000002_graph(selected_countries_list, selected_year)
-
-    # Colonne de droite contenant les graphiques
-    graphs_column = html.Div([
-        graph1,
-        graph2,
-    ], style={
-        'width': '40%',
-        'display': 'flex',
-        'flexDirection': 'column',
-        'gap': '5px',
-        'padding': '5px'
-    })
-
-    # Conteneur principal en ligne (deux colonnes)
-    layout = html.Div([
-        map_column,
-        graphs_column
-    ], style={
-        'display': 'flex',
-        'flexDirection': 'row',
-        'width': '100%',
-        'height': '100%',
-    })
-
-    return layout
-
-
-#---------------------------------------------------- MMR100k Graph ---------------------------------------------------#
-
-def get_MMR100k_data(selected_countries_list, selected_year):
-    """
-    Retrieve the MMR100k data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: DataFrame containing the MMR100k data.
-    :rtype: pandas.DataFrame
-    """
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-    engine = create_engine(os.getenv("DATABASE_URL"))
-
-    with engine.connect() as connection:
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query = select(indicator_table).where(
-            and_(
-                indicator_table.columns.id_indicator == "MMR_100k",
-                indicator_table.columns.id_country.in_(country_codes),
-                indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
-            )
+    map = html.Div([
+        dcc.Loading(
+            id="loading-indicator",  # ID pour l'indicateur de chargement
+            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},  # This initializes the map when the app loads
+                    selectedData=None  # We use this property to capture selected country data
+                )
+            ]
         )
-        result = connection.execute(query).fetchall()
-        df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        # Remplacement des codes alpha3 par les noms de pays dans le DataFrame
-        df["id_country"] = df["id_country"].str.lower().map(country_mapping)
+    ], style={'width': '60%', 'height': '40vh'})
 
-    return df
+    something = html.Div([html.H4("Health status : Under Construction")], style={'width': '40%', 'height': '80vh'})
 
-def update_MMR100k_graph(selected_countries_list, selected_year):
-    """
-    Update the MMR100k graph with the data for the selected countries and year.
+    row_1 = html.Div([
+        map,
+        something,
+    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
 
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: A Dash Graph component with the updated MMR100k data.
-    :rtype: dash.development.base_component.Component
-    """
-    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
-
-    if selected_countries_list:
-        df = get_MMR100k_data(selected_countries_list, selected_year)
-        # Création du graphique avec Plotly
-        fig = px.line(
-            data_frame=df,
-            x="year_recorded",  # Modifier selon ta colonne contenant les années
-            y="value",  # Modifier selon ta colonne contenant les valeurs
-            color_discrete_map=country_to_color,
-            color="id_country",  # Différencier les courbes par pays
-            custom_data=["id_country"],
-            color_discrete_sequence=px.colors.qualitative.G10,
-        )
-
-        fig.update_layout(
-            title={
-                'text': "<b>Maternal mortality ratio</b>",
-                'y': 0.95,  # Ajuste la hauteur du titre
-                'x': 0.5,  # Centre le texte par rapport à la zone du graphique
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Years",
-            yaxis_title="Value (per 100k live births)",
-            legend_title="Country",
-            margin={'t': 30},  # Augmente la marge supérieure pour éviter le chevauchement
-            title_xref='paper',  # Centre le titre sur la zone de tracé
-        )
-
-        fig.update_traces(
-            hoverinfo='skip',
-            hovertemplate="Year: %{x}<br>Value: %{y:.2f}<br>Country: %{customdata[0]}<extra></extra>",
-            mode="lines+markers",
-            hovertext=None,
-            showlegend=True,
-        )
-        fig.update_layout(
-            hovermode="closest",  # Affiche l'infobulle uniquement pour la courbe la plus proche
-            hoverlabel=dict(namelength=0),  # Empêche l'affichage du nom du pays à côté de l'infobulle
-        )
-    else:
-        fig = {}
-
-    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
-
-#------------------------------------------------- WHOSIS_000001 Graph ------------------------------------------------#
-
-def get_WHOSIS_000001_data(selected_countries_list, selected_year):
-    """
-    Retrieve the WHOSIS_000001 data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: DataFrame containing the WHOSIS_000001 data.
-    :rtype: pandas.DataFrame
-    """
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-    engine = create_engine(os.getenv("DATABASE_URL"))
-
-    with engine.connect() as connection:
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query = select(indicator_table).where(
-            and_(
-                indicator_table.columns.id_indicator == "WHOSIS_000001",
-                indicator_table.columns.id_country.in_(country_codes),
-                indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1]),
-                indicator_table.columns.sexe=="Both sexes"
-            )
-        )
-        result = connection.execute(query).fetchall()
-        df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        # Remplacement des codes alpha3 par les noms de pays dans le DataFrame
-        df["id_country"] = df["id_country"].str.lower().map(country_mapping)
-
-    return df
-
-def update_WHOSIS_000001_graph(selected_countries_list, selected_year):
-    """
-    Update the WHOSIS_000001 graph with the data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: A Dash Graph component with the updated WHOSIS_000001 data.
-    :rtype: dash.development.base_component.Component
-    """
-    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
-
-    if selected_countries_list:
-        df = get_WHOSIS_000001_data(selected_countries_list, selected_year)
-        # Création du graphique avec Plotly
-        fig = px.line(
-            data_frame=df,
-            x="year_recorded",  # Modifier selon ta colonne contenant les années
-            y="value",  # Modifier selon ta colonne contenant les valeurs
-            color_discrete_map=country_to_color,
-            color="id_country",  # Différencier les courbes par pays
-            custom_data=["id_country"],
-            color_discrete_sequence=px.colors.qualitative.G10,
-        )
-
-        fig.update_layout(
-            title={
-                'text': "<b>Life expectancy at birth</b>",
-                'y': 0.95,  # Ajuste la hauteur du titre
-                'x': 0.5,  # Centre le texte par rapport à la zone du graphique
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Years",
-            yaxis_title="Value (years)",
-            legend_title="Country",
-            margin={'t': 30},  # Augmente la marge supérieure pour éviter le chevauchement
-            title_xref='paper',
-        )
-
-        fig.update_traces(
-            hoverinfo='skip',
-            hovertemplate="Year: %{x}<br>Value: %{y:.2f}<br>Country: %{customdata[0]}<extra></extra>",
-            mode="lines+markers",
-            showlegend=True,
-
-        )
-        fig.update_layout(
-            hovermode="closest",  # Affiche l'infobulle uniquement pour la courbe la plus proche
-            hoverlabel=dict(namelength=0),  # Empêche l'affichage du nom du pays à côté de l'infobulle
-        )
-    else:
-        fig = {}
-
-    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
-
-#------------------------------------------------- WHOSIS_000002 Graph ------------------------------------------------#
-
-def get_WHOSIS_000002_data(selected_countries_list, selected_year):
-    """
-    Retrieve the WHOSIS_000002 data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: DataFrame containing the WHOSIS_000002 data.
-    :rtype: pandas.DataFrame
-    """
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-    engine = create_engine(os.getenv("DATABASE_URL"))
-
-    with engine.connect() as connection:
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query = select(indicator_table).where(
-            and_(
-                indicator_table.columns.id_indicator == "WHOSIS_000002",
-                indicator_table.columns.id_country.in_(country_codes),
-                indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1]),
-                indicator_table.columns.sexe=="Both sexes"
-            )
-        )
-
-        result = connection.execute(query).fetchall()
-        df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        # Remplacement des codes alpha3 par les noms de pays dans le DataFrame
-        df["id_country"] = df["id_country"].str.lower().map(country_mapping)
-
-    return df
-
-def update_WHOSIS_000002_graph(selected_countries_list, selected_year):
-    """
-    Update the WHOSIS_000002 graph with the data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: A Dash Graph component with the updated WHOSIS_000002 data.
-    :rtype: dash.development.base_component.Component
-    """
-
-    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
-
-    if selected_countries_list:
-        df = get_WHOSIS_000002_data(selected_countries_list, selected_year)
-        # Création du graphique avec Plotly
-        fig = px.line(
-            data_frame= df,
-            x="year_recorded",  # Modifier selon ta colonne contenant les années
-            y="value",  # Modifier selon ta colonne contenant les valeurs
-            color_discrete_map=country_to_color,
-            color="id_country",
-            custom_data=["id_country"],
-            color_discrete_sequence=px.colors.qualitative.G10,
-        )
-        fig.update_layout(
-            title={
-                'text': "<b>Healthy life expectancy at birth</b>",
-                'y': 0.97,
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Years",
-            yaxis_title="Value (years)",
-            legend_title="Country",
-            margin={'t': 30},
-            title_xref='paper'
-        )
-
-        fig.update_traces(
-            hoverinfo='skip',
-            hovertemplate="Year: %{x}<br>Value: %{y:.2f}<br>Country:%{customdata[0]}<extra></extra>",
-            mode="lines+markers",
-            hovertext=None,
-            showlegend=True,
-        )
-        fig.update_layout(
-            hovermode="closest",  # Affiche l'infobulle uniquement pour la courbe la plus proche
-            hoverlabel=dict(namelength=0),  # Empêche l'affichage du nom du pays à côté de l'infobulle
-        )
-    else:
-        fig = {}
-
-    return dcc.Graph(id='health-status-graph', figure=fig,style={'width': '100%', 'height': '40vh'})
-
-#-------------------------------------------------- SH_DYN_MORT Graph -------------------------------------------------#
-
-def get_SH_DYN_MORT_data(selected_countries_list, selected_year):
-    """
-    Retrieve the SH_DYN_MORT data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: DataFrame containing the SH_DYN_MORT data.
-    :rtype: pandas.DataFrame
-    """
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-    engine = create_engine(os.getenv("DATABASE_URL"))
-
-    with engine.connect() as connection:
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query = select(indicator_table).where(
-            and_(
-                indicator_table.columns.id_indicator.in_(["SH.DYN.MORT", "SH.DYN.MORT.FE", "SH.DYN.MORT.MA"]),
-                indicator_table.columns.id_country.in_(country_codes),
-                indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1]),
-            )
-        )
-
-        result = connection.execute(query).fetchall()
-        df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        # Remplacement des codes alpha3 par les noms de pays dans le DataFrame
-        df["id_country"] = df["id_country"].str.lower().map(country_mapping)
-
-    return df
-
-def update_SH_DYN_MORT_graph(selected_countries_list, selected_year):
-    """
-    Update the SH_DYN_MORT graph with the data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: A Dash Graph component with the updated SH_DYN_MORT data.
-    :rtype: dash.development.base_component.Component
-    """
-
-    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
-
-    if selected_countries_list:
-        # Récupérer les données pour les filles et les garçons
-        df = get_SH_DYN_MORT_data(selected_countries_list, selected_year)
-
-        # Filtrer les données pour les filles et les garçons
-        df_female = df[df['id_indicator'] == 'SH.DYN.MORT.FE']
-        df_male = df[df['id_indicator'] == 'SH.DYN.MORT.MA']
-
-        # Ajouter une colonne 'gender' pour indiquer si c'est pour les filles ou les garçons
-        df_female = df_female.assign(gender='Female')
-        df_male = df_male.assign(gender='Male')
-
-        # Combiner les DataFrames des filles et des garçons
-        df_combined = pd.concat([df_female, df_male])
-        df_combined = df_combined.sort_values("id_country")
-
-        # Création du graphique à barres avec Plotly
-        fig = px.bar(
-            data_frame=df_combined,
-            x="year_recorded",  # Année sur l'axe des X
-            y="value",  # Taux de mortalité sur l'axe des Y
-            color_discrete_map=country_to_color,
-            color="id_country",  # Différencier les barres par pays
-            barmode="group",  # Afficher les barres côte à côte
-            custom_data=["id_country", "gender"],
-            facet_col=None,  # Pas de facettage, un seul graphique
-            color_discrete_sequence=px.colors.qualitative.G10
-        )
-
-        fig.update_layout(
-            title={
-                'text': "<b>Mortality Rate under 5 years</b>",
-                'y': 0.95,  # Ajuste la hauteur du titre
-                'x': 0.5,  # Centre le texte par rapport à la zone du graphique
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Years",
-            yaxis_title="Value (per 1,000 live births)",
-            legend_title="Country",
-            margin={'t': 30},  # Augmente la marge supérieure pour éviter le chevauchement
-            title_xref='paper',  # Centre le titre sur la zone de tracé
-        )
-
-        fig.update_traces(
-            hoverinfo='skip',
-            hovertemplate="Year: %{x}<br>Value: %{y:.2f}<br>Country: %{customdata[0]}<br>Gender: %{customdata[1]}<extra></extra>",
-            hovertext=None,
-            showlegend=True,
-        )
-        fig.update_layout(
-            hovermode="closest",  # Affiche l'infobulle uniquement pour la courbe la plus proche
-            hoverlabel=dict(namelength=0),  # Empêche l'affichage du nom du pays à côté de l'infobulle
-        )
-    else:
-        fig = {}
-
-    return dcc.Graph(id='mortality-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
-
-#--------------------------------------------- SH_DYN_MORT_neonatal Graph ---------------------------------------------#
-
-def get_SH_DYN_MORT_neo_data(selected_countries_list, selected_year):
-    """
-    Retrieve the SH_DYN_MORT_neo data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: DataFrame containing the SH_DYN_MORT_neo data.
-    :rtype: pandas.DataFrame
-    """
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-    engine = create_engine(os.getenv("DATABASE_URL"))
-
-    with engine.connect() as connection:
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query = select(indicator_table).where(
-            and_(
-                indicator_table.columns.id_indicator.in_(['SH.DYN.NMRT']),
-                indicator_table.columns.id_country.in_(country_codes),
-                indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1]),
-            )
-        )
-
-        result = connection.execute(query).fetchall()
-        df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        # Remplacement des codes alpha3 par les noms de pays dans le DataFrame
-        df["id_country"] = df["id_country"].str.lower().map(country_mapping)
-
-    return df
-
-def update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year):
-    """
-    Update the SH_DYN_MORT_neo graph with the data for the selected countries and year.
-
-    :param selected_countries_list: List of selected countries.
-    :type selected_countries_list: list
-    :param selected_year: The selected year for the data.
-    :type selected_year: list[int]
-    :return: A Dash Graph component with the updated SH_DYN_MORT_neo data.
-    :rtype: dash.development.base_component.Component
-    """
-    country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
-
-    if selected_countries_list:
-        # Récupérer les données de mortalité néonatale
-        df = get_SH_DYN_MORT_neo_data(selected_countries_list, selected_year)
-
-        # Filtrer les données pour la mortalité néonatale (identifiant 'SH.DYN.NMRT')
-        df_neonatal = df[df['id_indicator'] == 'SH.DYN.NMRT']
-
-        # Création du graphique en ligne avec Plotly
-        fig = px.line(
-            data_frame=df_neonatal,
-            x="year_recorded",  # Année sur l'axe des X
-            y="value",  # Taux de mortalité néonatale sur l'axe des Y
-            color_discrete_map=country_to_color,
-            color="id_country",  # Différencier les lignes par pays
-            markers=True,  # Ajouter des marqueurs pour chaque point de donnée
-            custom_data=["id_country"],  # Données supplémentaires pour le survol
-            color_discrete_sequence=px.colors.qualitative.G10,
-        )
-
-        fig.update_layout(
-            title={
-                'text': "<b>Neonatal mortality rate</b>",
-                'y': 0.95,  # Ajuste la hauteur du titre
-                'x': 0.5,  # Centre le texte par rapport à la zone du graphique
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            xaxis_title="Years",
-            yaxis_title="Value (per 1,000 live births)",
-            legend_title="Country",
-            margin={'t': 30},  # Augmente la marge supérieure pour éviter le chevauchement
-            title_xref='paper',  # Centre le titre sur la zone de tracé
-        )
-
-        fig.update_traces(
-            hoverinfo='skip',
-            hovertemplate="Year: %{x}<br>Value: %{y:.2f}<br>Country: %{customdata[0]}<extra></extra>",
-            hovertext=None,
-            showlegend=True,
-        )
-
-        fig.update_layout(
-            hovermode="closest",  # Affiche l'infobulle uniquement pour la courbe la plus proche
-            hoverlabel=dict(namelength=0),  # Empêche l'affichage du nom du pays à côté de l'infobulle
-        )
-
-    else:
-        fig = {}
-
-    return dcc.Graph(id='mortality-neo-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
-
-
-########################################################################################################################
-
+    return row_1
 
 def generate_factors_risk_status_page(selected_countries_list):
 
@@ -670,10 +116,252 @@ def generate_factors_risk_status_page(selected_countries_list):
         something,
     ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
 
-
     return row_1
 
-def generate_coverage_status_page(selected_countries_list):
+#################################################### Coverage Status Page ################################################
+
+def generate_coverage_status_page(selected_countries_list, selected_year):
+    store_selected_countries = dcc.Store(id="selected-countries-store")
+
+    # Section de sélection de catégorie et d'indicateur
+    selection_controls = html.Div([
+        dcc.RadioItems(
+            id='data-category',
+            options=[
+                {'label': 'Diseases', 'value': 'disease'},
+                {'label': 'Vaccination coverage', 'value': 'vaccine'}
+            ],
+            value='disease',
+            labelStyle={'display': 'inline-block', 'marginRight': '20px'}
+        ),
+        dcc.Dropdown(
+            id='specific-indicator',
+            # Définit les options pour la catégorie "Diseases"
+            options=[
+                {'label': 'HIV', 'value': 'HIV_0000000001'},
+                {'label': 'Malaria', 'value': 'MALARIA_EST_INCIDENCE'},          
+                {'label': 'Tuberculosis', 'value': 'MDG_0000000020'}
+            ],
+            value=None,
+            placeholder="Select...",  # Texte affiché par défaut
+            clearable=False,
+            style={'width': '300px', 'marginLeft': '20px'}
+        )
+    ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px'})
+
+    # Div pour la carte
+    map = html.Div([
+        dcc.Loading(
+            id="loading-indicator",  
+            type="circle",  
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},  
+                    selectedData=None  
+                )
+            ]
+        )
+    ], style={'width': '60%', 'height': '40vh', 'padding': '5px'})
+
+    # Conteneur pour le graphique linéaire (mise à jour via callback)
+    linear_graph_container = html.Div(
+        id='indicator-graph-container',
+        style={'width': '40%', 'height': '80vh', 'padding': '10px', 'alignSelf': 'flex-start'}
+    )
+
+    # Première rangée : carte et graphique linéaire côte à côte
+    top_row = html.Div(
+        [map, linear_graph_container],
+        style={'display': 'flex', 'flexDirection': 'row', 'width': '100%', 'alignItems': 'flex-start'}
+    )
+
+    # Conteneur pour le diagramme Top 5 
+    top5_chart_container = html.Div(
+        id='top5-bar-chart-container',
+        style={
+            'width': '50%', 
+            'height': '60vh',
+            'padding': '5px', 
+            'marginTop': '0px'
+        }
+    )
+    
+    # Conteneur pour le diagramme vertical
+    selected_country_average_container = html.Div(
+        id="selected-country-average-container",
+        style={
+            'width': '50%', 
+            'height': '60vh', 
+            'padding': '5px', 
+            'textAlign': 'center', 
+            'lineHeight': '30vh',
+            'marginTop': '0px'
+        }
+    )
+
+    # Conteneur pour le diagramme horizontal
+    global_average_container = html.Div(
+        id="global-average-container",
+        style={
+            'width': '33.33%', 
+            'height': '30vh', 
+            'padding': '10px', 
+            'textAlign': 'center', 
+            'lineHeight': '30vh'
+        }
+    )
+    
+    # Deuxième rangée : les trois diagrammes côte à côte
+    bottom_row = html.Div(
+        [top5_chart_container, selected_country_average_container, global_average_container],
+        style={'display': 'flex', 'flexDirection': 'row', 'width': '100%','marginTop': '0px'}
+    )
+
+    # Zone réservée au graphique de l'indicateur (sera mis à jour par un callback)
+    graph = html.Div(
+        id='indicator-graph-container', 
+        style={
+            'width': '40%', 
+            'height': '10vh', 
+            'padding': '10px', 
+            'flexDirection': 'row',
+            'alignSelf': 'flex-start',
+            'margin-top': '-70px'  # Déplacer le graphique vers le haut
+        })
+    
+    # Organisation en ligne : carte et graphique côte à côte
+    row_1 = html.Div([
+        graph,
+    ], style={
+        'display': 'flex', 
+        'flexDirection': 'row', 
+        'padding': '5px', 
+        'width': '100%',
+        'align-items': 'flex-start'  
+    })
+
+    title_banner = html.Div(
+        html.H2(
+            id="title-banner",
+            children="Service Coverage Indicators : No countries selected",
+            style={
+                'textAlign': 'center', 
+                'color': 'white', 
+                'fontSize': '28px', 
+                'fontWeight': 'bold', 
+                'textTransform': 'uppercase',
+                'margin': '0px'
+            }
+        ),
+        style={
+            'backgroundColor': '#3498DB',
+            'padding': '15px',
+            'borderRadius': '10px',
+            'textAlign': 'center',
+            'boxShadow': '2px 2px 10px rgba(0, 0, 0, 0.2)',
+            'marginBottom': '20px',
+            'width': '100%'  # S'assure que la bande bleue couvre toute la largeur
+        }
+    )
+
+    subtitle = html.P(
+        "Explore health and vaccination coverage by country and indicator",
+        style={
+            'textAlign': 'center',
+            'color': '#7F8C8D',
+            'fontSize': '18px',
+            'fontStyle': 'italic',
+            'marginBottom': '30px'
+        }
+    )
+    
+    dcc.Store(id="selected-countries-store", data=selected_countries_list)
+
+    return html.Div([
+        store_selected_countries,
+        title_banner,
+        subtitle,
+        selection_controls,
+        top_row,
+        bottom_row
+    ])
+
+def get_indicator_data(selected_countries_list, selected_year, indicator_code):
+
+    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
+    
+    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db" 
+
+    database_url = os.getenv("BASE_URL")
+    engine = create_engine(database_url)
+
+    with engine.connect() as connection:
+        metadata = MetaData()
+        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
+
+        query = select(indicator_table).where(
+            and_(
+                indicator_table.columns.id_indicator == indicator_code,
+                indicator_table.columns.id_country.in_(country_codes),
+                indicator_table.columns.year_recorded.between(2000, selected_year)
+            )
+        )
+
+        result = connection.execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
+        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
+        # Remplacement des codes alpha3 par les noms de pays dans le DataFrame
+        df["id_country"] = df["id_country"].str.lower().map(country_mapping)
+
+    return df
+
+def update_indicator_graph(selected_countries_list, selected_year, indicator_code, indicator_title):
+    if selected_countries_list:
+        df = get_indicator_data(selected_countries_list, selected_year, indicator_code)
+        if df.empty:
+            # Cas où aucune donnée n'est renvoyée
+            fig = go.Figure()
+            fig.add_annotation(text="No data available",
+                               xref="paper", yref="paper", showarrow=False)
+
+        # Création du graphique avec Plotly
+        else:
+            fig = px.line(
+                data_frame= df,
+                x="year_recorded",  
+                y="value",  
+                color="id_country",  
+                title=f"{indicator_title} in {selected_year}"
+            )
+    else:
+        # Message si aucun pays n'est sélectionné
+        fig = go.Figure()
+        fig.add_annotation(text="Please select one or more countries",
+                           xref="paper", yref="paper", showarrow=False)
+    
+    # Personnalisation du layout pour centrer le titre et autoriser le retour à la ligne
+    fig.update_layout(
+        title={
+            'text': fig.layout.title.text,  
+            'x': 0.5,
+            'xanchor': 'center'
+        },
+        margin={"l": 40, "r": 20, "t": 60, "b": 40},
+        hovermode="x unified",
+        font=dict(size=12)
+    )
+    
+    return dcc.Graph(
+        id='coverage-status-graph', 
+        figure=fig,
+        config={'displayModeBar': False},  # Désactive la barre d'outils
+        style={'width': '100%', 'height': '80vh'})
+
+########################################################################################################################
+
+def generate_health_systems_page(selected_countries_list):
     map = html.Div([
         dcc.Loading(
             id="loading-indicator",  # ID pour l'indicateur de chargement
@@ -689,7 +377,7 @@ def generate_coverage_status_page(selected_countries_list):
         )
     ], style={'width': '60%', 'height': '40vh'})
 
-    something = html.Div([html.H4("Risk Factor : Under Construction")], style={'width': '40%', 'height': '80vh'})
+    something = html.Div([html.H4("Health systems : Under Construction")], style={'width': '40%', 'height': '80vh'})
 
     row_1 = html.Div([
         map,
@@ -698,182 +386,6 @@ def generate_coverage_status_page(selected_countries_list):
 
 
     return row_1
-
-
-
-
-
-
-
-################################################### Health Systems Page ################################################
-def generate_health_systems_page(selected_countries_list, selected_year):
-
-    map = html.Div([
-        dcc.Loading(
-            id="loading-indicator",  # ID pour l'indicateur de chargement
-            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
-            children=[
-                dcc.Graph(
-                    id="world-map",
-                    config={'scrollZoom': True, 'displayModeBar': False},
-                    selectedData=None  # We use this property to capture selected country data
-                )
-            ]
-        )
-    ], style={'width': '60%', 'height': '50vh'})
-
-    birth_graph = update_health_systems_graph_birth(selected_countries_list, selected_year)
-    death_graph = update_health_systems_graph_death(selected_countries_list, selected_year)
-
-    graphs = html.Div([
-        birth_graph,
-        death_graph
-    ], style={
-        'display': 'flex',
-        'flexDirection': 'row',
-        'alignItems': 'center',
-        'justifyContent': 'center',
-        'padding': '10px',
-        'width': '100%'
-    })
-
-    row_health_systems = html.Div([
-        map,
-        graphs,
-    ], style={
-        'display': 'flex',
-        'flexDirection': 'column',
-        'alignItems': 'center',
-        'justifyContent': 'center',
-        'padding': '10px',
-        'width': '100%'
-    })
-
-    return row_health_systems
-
-
-
-def get_health_systems_data_birth(selected_countries_list, selected_year) :
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-
-
-    database_url = os.getenv("DATABASE_URL")
-    engine = create_engine(database_url)
-
-    with engine.connect() as connection :
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query= select(indicator_table).where(
-            indicator_table.columns.id_indicator == "SP.REG.BRTH.ZS",
-            indicator_table.columns.id_country.in_(country_codes),
-            indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
-        )
-
-        result = connection.execute(query).fetchall()
-        df_birth = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        df_birth["id_country"] = df_birth["id_country"].str.lower().map(country_mapping)
-
-    return df_birth
-
-def get_health_systems_data_death(selected_countries_list, selected_year) :
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-
-    database_url = os.getenv("DATABASE_URL")
-    engine = create_engine(database_url)
-
-    with engine.connect() as connection :
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query= select(indicator_table).where(
-            indicator_table.columns.id_indicator == "SP.REG.DTHS.ZS",
-            indicator_table.columns.id_country.in_(country_codes),
-            indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
-        )
-
-        result = connection.execute(query).fetchall()
-        df_death = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        df_death["id_country"] = df_death["id_country"].str.lower().map(country_mapping)
-
-    return df_death
-
-def get_health_systems_data_uhc(selected_countries_list, selected_year) :
-
-    country_codes = [c["alpha3"].lower() for c in selected_countries_list]
-
-    database_url = os.getenv("DATABASE_URL")
-    engine = create_engine(database_url)
-
-    with engine.connect() as connection :
-        metadata = MetaData()
-        indicator_table = Table('Timed_Indicators', metadata, autoload_with=engine)
-
-        query= select(indicator_table).where(
-            indicator_table.columns.id_indicator == "SH.UHC.SRVS.CV.XD",
-            indicator_table.columns.id_country.in_(country_codes),
-            indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
-        )
-
-        result = connection.execute(query).fetchall()
-        print(result)
-        df_uhc = pd.DataFrame(result, columns=[col.name for col in indicator_table.columns])
-
-        country_mapping = {c["alpha3"].lower(): c["name"] for c in selected_countries_list}
-        df_uhc["id_country"] = df_uhc["id_country"].str.lower().map(country_mapping)
-
-    return df_uhc
-
-
-
-
-
-def update_health_systems_graph_birth(selected_countries_list, selected_year) :
-    if selected_countries_list :
-        df_birth = get_health_systems_data_birth(selected_countries_list, selected_year)
-
-        df_birth = df_birth.dropna(subset=["year_recorded", "value", "id_country"])
-
-        # Création du graphique
-        fig = px.line(
-            data_frame = df_birth,
-            x = "year_recorded",
-            y = "value",
-            color = "id_country",
-            title = f"Completeness of birth registration from {selected_year[0]} to {selected_year[1]}",
-            markers=True,
-            #hover_name = {"year_recorded": True, "value": True}
-        )
-    else :
-        fig = {}
-
-    return dcc.Graph(id = 'update_health_systems_graph', figure=fig, style={'width': '60%', 'height': '40vh'})
-
-def update_health_systems_graph_death(selected_countries_list, selected_year) :
-    if selected_countries_list :
-        df_death = get_health_systems_data_death(selected_countries_list, selected_year)
-
-        df_death = df_death.dropna(subset=["year_recorded", "value", "id_country"])
-
-        fig = px.line(
-            data_frame = df_death,
-            x = "year_recorded",
-            y = "value",
-            color = "id_country",
-            title = f"Completeness of death registration from {selected_year[0]} to {selected_year[1]}",
-            markers=True,
-            #hover_data={"year_recorded": True, "value": True}
-        )
-    else :
-        fig = {}
-
-    return dcc.Graph(id='update_health_systems_graph_death', figure=fig, style={'width': '50%', 'height': '40vh'})
 
 
 
