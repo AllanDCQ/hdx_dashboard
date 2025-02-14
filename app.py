@@ -330,7 +330,7 @@ def update_page_and_countries(*args):
     return (
         html.H4(f"{title_page} : {countries}"),
         alert,
-        display_status_page(),
+        display_status_page(selected_year),  # Passez selected_year ici
         selected_countries_list
     )
 
@@ -464,7 +464,7 @@ def update_map_health_systems() :
 
     return fig_map
 
-def display_status_page():
+def display_status_page(selected_year):
     """
     Display the status page based on the selected title.
 
@@ -472,20 +472,19 @@ def display_status_page():
     :rtype: dash.development.base_component.Component
     """
 
-
     global title_page
     global selected_countries_list
-    
-    #CODE adapté pour permettre de gere le fichier risk_factors_graphs.py
+
     match title_page:
         case "Health Status Indicators":
             return af.generate_health_status_page(selected_countries_list,selected_year)
 
         case "Risk Factors Indicators":
-            country_codes = [c["alpha3"].lower() for c in selected_countries_list]  # <- Convertir en minuscules
-            return rfg.generate_risk_factors_page(selected_year, country_codes)
+            return af.generate_factors_risk_status_page(selected_countries_list, selected_year)
+        
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page(selected_countries_list)
+
         case "Health Systems":
             return af.generate_health_systems_page(selected_countries_list,selected_year)
 
