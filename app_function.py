@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+from risk_factors_graphs import generate_risk_factors_page
+from risk_factors_queries import get_risk_factors_data
 
 from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
@@ -69,7 +71,13 @@ def get_country_name_by_alpha3(alpha3, country_data):
                  if isinstance(country, dict) and country["alpha3"] == alpha3), None)
 
 
-
+def generate_factors_risk_status_page(selected_countries_list, selected_year):
+    """Génère la page des facteurs de risque"""
+    # Obtenir les codes pays au format correct
+    country_codes = [c["alpha3"].upper() for c in selected_countries_list] if selected_countries_list else None
+    
+    # Générer la page avec les graphiques
+    return generate_risk_factors_page(selected_year, country_codes)
 
 
 #################################################### Health Status Page ################################################
@@ -646,7 +654,6 @@ def update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year):
 ########################################################################################################################
 
 
-def generate_factors_risk_status_page(selected_countries_list):
 
     map = html.Div([
         dcc.Loading(

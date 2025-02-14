@@ -17,6 +17,9 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 
+# Définir la variable d'environnement DATABASE_URL
+os.environ["DATABASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+
 
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
 
@@ -330,7 +333,7 @@ def update_page_and_countries(*args):
     return (
         html.H4(f"{title_page} : {countries}"),
         alert,
-        display_status_page(),
+        display_status_page(selected_year),  # Passez selected_year ici
         selected_countries_list
     )
 
@@ -464,7 +467,7 @@ def update_map_health_systems() :
 
     return fig_map
 
-def display_status_page():
+def display_status_page(selected_year):
     """
     Display the status page based on the selected title.
 
@@ -480,8 +483,8 @@ def display_status_page():
             return af.generate_health_status_page(selected_countries_list,selected_year)
 
         case "Risk Factors Indicators":
-            return af.generate_factors_risk_status_page(selected_countries_list)
-
+            return af.generate_factors_risk_status_page(selected_countries_list, selected_year)
+        
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page(selected_countries_list)
 
@@ -507,6 +510,7 @@ def display_status_page():
 
 # Run the Dash app
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
+    port = int(os.getenv("PORT", 8050))  # Utilisez 8050 comme port par défaut
+    app.run_server(host="0.0.0.0", port=port, debug=False)
     #app.run_server(debug=True)
 
