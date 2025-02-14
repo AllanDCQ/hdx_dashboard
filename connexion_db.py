@@ -57,8 +57,6 @@ def update_list_health_status(country_list):
 
         concurrent.futures.wait(futures, timeout=30)  # Attend la fin des mises à jour des pays
 
-    _fetch_unicef_data(country_list)
-
 def update_all_health_status():
     """
     Updates the health status for all countries by fetching data from various sources.

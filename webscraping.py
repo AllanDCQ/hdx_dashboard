@@ -313,9 +313,14 @@ class FetchPage(Fetch):
     """
     Class to fetch and download datasets from the HDX page for a specific country and a specific source of dataset.
 
-    :param country: The country to fetch the datasets for.
-    :param source_dataset: The source of dataset to fetch (e.g. "who-data").
+    :param country_id: The ID of the country.
+    :type country_id: str
+    :param source_dataset: The source of the dataset.
+    :type source_dataset: str
     :param dataset_index: The index of the dataset to fetch (optional).
+    :type dataset_index: int
+    :param dataset_name: The name of the dataset to fetch (optional).
+    :type dataset_name: str
     """
     def __init__(self, country_id, source_dataset, dataset_index=None, dataset_name=None):
         super().__init__(source_dataset, dataset_index)

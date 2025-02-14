@@ -36,7 +36,7 @@ selected_countries_list = []
 selected_geojson_data = {}
 
 # Initialise delfault year selected
-selected_year = [2008,2020]
+selected_year = [2015,2020]
 
 # Initial default title page
 title_page = "Health Status Indicators"
@@ -356,6 +356,9 @@ def update_map(*args):
     :rtype: plotly.graph_objects.Figure
     """
 
+    if title_page == "Health Systems":
+        return update_map_health_systems()
+
     global selected_countries_list
     global selected_geojson_data
 
@@ -426,6 +429,41 @@ def update_map(*args):
     return fig
 
 
+def update_map_health_systems() :
+
+
+    map_uhc = af.get_health_systems_data_uhc(selected_countries_list, selected_year)
+
+    min_value = map_uhc['value'].min()
+    max_value = map_uhc['value'].max()
+
+    fig_map = px.choropleth(
+        data_frame=map_uhc,
+        locations=map_uhc['id_country'],
+        color=map_uhc['value'],
+        hover_name=map_uhc['id_country'],
+        title=f"UHC Service Coverage Index ({selected_year[0]} - {selected_year[1]})",
+        color_continuous_scale='Blues',
+        range_color=[min_value, max_value],
+        hover_data={'value': True}
+    )
+
+    fig_map.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>UHC Index: %{z}<extra></extra>",
+        hovertext=map_uhc['id_country']
+    )
+
+    fig_map.update_layout(
+        coloraxis_showscale=True,
+        coloraxis_colorbar={
+            "title": "UHC Index",
+            "tickvals": [min_value, (min_value + max_value) / 2, max_value],
+            "ticktext": [f"{min_value:.0f}", f"{(min_value + max_value) / 2:.0f}", f"{max_value:.0f}"]
+        },
+        margin={"r": 0, "t": 50, "l": 0, "b": 0}
+    )
+
+    return fig_map
 
 def display_status_page():
     """

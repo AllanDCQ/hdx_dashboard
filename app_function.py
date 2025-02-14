@@ -13,6 +13,7 @@ os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2Qmi
 
 
 
+
 def generate_country_menu(country_data):
     """
     Generate a dropdown menu for selecting countries, organized by regions and subregions.
@@ -802,9 +803,8 @@ def get_health_systems_data_birth(selected_countries_list, selected_year) :
 
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
-    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
 
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection :
@@ -814,7 +814,7 @@ def get_health_systems_data_birth(selected_countries_list, selected_year) :
         query= select(indicator_table).where(
             indicator_table.columns.id_indicator == "SP.REG.BRTH.ZS",
             indicator_table.columns.id_country.in_(country_codes),
-            indicator_table.columns.year_recorded.between(2000, selected_year)
+            indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
         )
 
         result = connection.execute(query).fetchall()
@@ -829,9 +829,7 @@ def get_health_systems_data_death(selected_countries_list, selected_year) :
 
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
-    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
-
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection :
@@ -841,7 +839,7 @@ def get_health_systems_data_death(selected_countries_list, selected_year) :
         query= select(indicator_table).where(
             indicator_table.columns.id_indicator == "SP.REG.DTHS.ZS",
             indicator_table.columns.id_country.in_(country_codes),
-            indicator_table.columns.year_recorded.between(2000, selected_year)
+            indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
         )
 
         result = connection.execute(query).fetchall()
@@ -856,9 +854,7 @@ def get_health_systems_data_uhc(selected_countries_list, selected_year) :
 
     country_codes = [c["alpha3"].lower() for c in selected_countries_list]
 
-    os.environ["BASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
-
-    database_url = os.getenv("BASE_URL")
+    database_url = os.getenv("DATABASE_URL")
     engine = create_engine(database_url)
 
     with engine.connect() as connection :
@@ -868,7 +864,7 @@ def get_health_systems_data_uhc(selected_countries_list, selected_year) :
         query= select(indicator_table).where(
             indicator_table.columns.id_indicator == "SH.UHC.SRVS.CV.XD",
             indicator_table.columns.id_country.in_(country_codes),
-            indicator_table.columns.year_recorded.between(2000, selected_year)
+            indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
         )
 
         result = connection.execute(query).fetchall()
@@ -895,7 +891,7 @@ def update_health_systems_graph_birth(selected_countries_list, selected_year) :
             x = "year_recorded",
             y = "value",
             color = "id_country",
-            title = f"Completeness of birth registration from 2000 to {selected_year}",
+            title = f"Birth rate from {selected_year[0]} to {selected_year[1]}",
             markers=True,
             #hover_name = {"year_recorded": True, "value": True}
         )
@@ -915,7 +911,7 @@ def update_health_systems_graph_death(selected_countries_list, selected_year) :
             x = "year_recorded",
             y = "value",
             color = "id_country",
-            title = f"Completeness of death registration from 2000 to {selected_year}",
+            title = f"Death rate from {selected_year[0]} to {selected_year[1]}",
             markers=True,
             #hover_data={"year_recorded": True, "value": True}
         )
