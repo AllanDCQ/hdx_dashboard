@@ -404,6 +404,8 @@ def update_map(*args):
     return fig
 
 
+# Code qui permet de relire au fichier risk_factors_graphs.py pour afficher les differents graphiques
+import risk_factors_graphs as rfg
 
 def display_status_page():
     """
@@ -413,21 +415,21 @@ def display_status_page():
     :rtype: dash.development.base_component.Component
     """
 
+
     global title_page
     global selected_countries_list
-
+    
+    #CODE adapté pour permettre de gere le fichier risk_factors_graphs.py
     match title_page:
         case "Health Status Indicators":
-            return af.generate_health_status_page(selected_countries_list,selected_year)
+            return af.generate_health_status_page(selected_countries_list, selected_year)
         case "Risk Factors Indicators":
-            return af.generate_factors_risk_status_page(selected_countries_list)
-
+            country_codes = [c["alpha3"].lower() for c in selected_countries_list]  # <- Convertir en minuscules
+            return rfg.generate_risk_factors_page(selected_year, country_codes)
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page(selected_countries_list)
-
         case "Health Systems":
             return af.generate_health_systems_page(selected_countries_list)
-
         case _:
             return None
 

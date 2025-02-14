@@ -214,8 +214,8 @@ def generate_health_systems_page(selected_countries_list):
                     selectedData=None  # We use this property to capture selected country data
                 )
             ]
-        )
-    ], style={'width': '60%', 'height': '40vh'})
+        )   
+    ], style={'width': '40%', 'height': '40vh'})
 
     something = html.Div([html.H4("Health systems : Under Construction")], style={'width': '40%', 'height': '80vh'})
 

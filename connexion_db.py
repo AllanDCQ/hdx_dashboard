@@ -5,7 +5,7 @@ import concurrent.futures
 
 
 """
-CODE EXEMPLE POUR ACCEDER A LA BASE DE DONNEES
+#CODE EXEMPLE POUR ACCEDER A LA BASE DE DONNEES
 
 # import   
 import os
@@ -13,6 +13,7 @@ import pandas as pd
 from sqlalchemy import select, create_engine, MetaData, Table
 
 os.environ["BASE_URL"] = "postgresql://******************"  !!!!!!!!!!!!!!! à ne pas push sur GitHub !!!!!!!!!!!!!!!!!!!
+
 
 with engine.connect() as connection:
     metadata = MetaData()
