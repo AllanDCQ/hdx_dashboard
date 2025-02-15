@@ -40,7 +40,8 @@ Health indicators are classified into **four main categories**, following WHO st
 - **Service Coverage**: Vaccination and healthcare access.
 - **Health System**: Hospital resources and birth registration.
 
-### 🌐 Dash Application
+## 🌐 Dash Application
+
 The dashboard is deployed on **Render**, utilizing PostgreSQL for secure data storage.
 <p>
     <img width="600" alt="webscraping" src="https://github.com/user-attachments/assets/fe6677bf-56d4-4b6d-87fd-e9002738e788" />
