@@ -54,56 +54,42 @@ def generate_coverage_status_page(selected_countries_list, selected_year):
                 )
             ]
         )
-    ], style={'width': '40%', 'height': '35%'})
+    ], className="responsive-item-1_coverage")
 
     # Conteneur pour le graphique linéaire (mise à jour via callback)
     linear_graph_container = html.Div(
         id='indicator-graph-container',
-        style={'width': '60%', 'height': '35%'}
+        className="responsive-map_coverage"
     )
 
     # Première rangée : carte et graphique linéaire côte à côte
     top_row = html.Div(
         [map, linear_graph_container],
-        style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'}
+        className="responsive-row_coverage"
     )
 
     # Conteneur pour le diagramme Top 5
     top5_chart_container = html.Div(
         id='top5-bar-chart-container',
-        style={
-            'width': '33.33%',
-            'height': '35%',
-            'padding': '5px',
-        }
+        className="responsive-item-2_coverage"
     )
 
     # Conteneur pour le diagramme vertical
     selected_country_average_container = html.Div(
         id="selected-country-average-container",
-        style={
-            'width': '33.33%',
-            'height': '35%',
-            'padding': '5px',
-            'textAlign': 'center',
-            'lineHeight': '30vh',
-        }
+        className="responsive-item-2_coverage"
     )
 
     # Conteneur pour le diagramme horizontal
     global_average_container = html.Div(
         id="global-average-container",
-        style={
-            'width': '33.33%',
-            'height': '35%',
-            'textAlign': 'center',
-        }
+        className="responsive-item-2_coverage"
     )
 
     # Deuxième rangée : les trois diagrammes côte à côte
     bottom_row = html.Div(
         [top5_chart_container, selected_country_average_container, global_average_container],
-        style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'}
+        className="responsive-row_coverage"
     )
 
     title_banner = html.Div(

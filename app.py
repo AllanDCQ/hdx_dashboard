@@ -161,8 +161,8 @@ def breakpoint_width(breakpoint_name: str, window_width: int):
 def list_button_nav():
     return [
         html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton),
-        html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
         html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton),
+        html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
         html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton),
     ]
 
@@ -879,6 +879,6 @@ def update_global_average(selected_category, indicator_code, selected_year):
 port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
 if __name__ == "__main__":
-    #app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
-    app.run_server(debug=True)
+    app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
+    #app.run_server(debug=True)
 

@@ -84,10 +84,29 @@
     padding: 10px;
 }
 
+/* --------------------------------------------------- Page Coverage ------------------------------------------------ */
+.responsive-row_coverage {
+    display: flex;
+    flex-direction: row;
+    padding: 5px;
+    width: 100%;
+}
 
+.responsive-item-1_coverage {
+    width: 40%;
+    height: 35%;
+}
 
+.responsive-map_coverage {
+    width: 60%;
+    height: 35%;
+}
 
-
+.responsive-item-2_coverage {
+    width: 33.33%;
+    height: 35%;
+    padding: 5px;
+}
 
 
 
@@ -95,6 +114,7 @@
 /* Appliquer flex-direction: column sur les petits écrans */
 @media screen and (max-width: 1000px) {
 
+    .responsive-row_coverage,
     .responsive-row-1_systems,
     .responsive-row_risk,
     .responsive-container {
@@ -102,6 +122,9 @@
         height: auto;
     }
 
+    .responsive-item-2_coverage,
+    .responsive-map_coverage,
+    .responsive-item-1_coverage,
     .responsive-map_risk,
     .responsive-column_risk-1,
     .responsive-column_risk-2,
