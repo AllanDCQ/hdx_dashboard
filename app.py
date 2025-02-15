@@ -1,14 +1,14 @@
 import json
-import os
 from types import NoneType
 
+import os
 from flask import Flask
 from flask_caching import Cache
 
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
-import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dc
 import numpy as np
 
 import app_function as af
@@ -17,8 +17,9 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 
-# Définir la variable d'environnement DATABASE_URL
-os.environ["DATABASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+from dash_breakpoints import WindowBreakpoints
+
+
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
 
 # Create a Flask server
@@ -29,15 +30,19 @@ app = dash.Dash(__name__,
                 title="HealthScope Info",
                 update_title="Loading...",
                 server=server,
-                external_stylesheets=[dbc.themes.BOOTSTRAP],
+                external_stylesheets=[dc.themes.BOOTSTRAP],
                 suppress_callback_exceptions=True)
 
 # Initialise list to store selected countries {"alpha3": selected_alpha3, "name": selected_country_name}
-selected_countries_list = []
+selected_countries_list = [
+    {"alpha3": "SOM", "name": "Somalia"},
+    {"alpha3": "KEN", "name": "Kenya"},
+    {"alpha3": "UGA", "name": "Uganda"},
+    {"alpha3": "TZA", "name": "Tanzania"}]
 selected_geojson_data = {}
 
 # Initialise delfault year selected
-selected_year = [2015,2020]
+selected_year = [2015,2022]
 
 # Initial default title page
 title_page = "Health Status Indicators"
@@ -87,88 +92,36 @@ geojson_data, geo_df = get_geo_df()  # Load once, then reuse
 
 
 
-
 # --------------------------------------------------- App Layout -------------------------------------------------------
-app.layout = html.Div([
 
+app.layout = html.Div([
     # =============================================== Top Navigation Bar ===============================================
     html.Div([
-        html.Div([
+        # Project Logo
+        html.A(href="https://hdx-dashboard.onrender.com/", target="_blank", children=html.Img(src="/assets/logo.png", style={'height': '5vh'})),
+        # University Logo
+        html.A(href="https://www.univ-lille.fr/", target="_blank", children=html.Img(src="/assets/lille.png", style={'height': '4vh', 'paddingLeft': '1vw', 'paddingRight': '5vw'})),
 
-            # Project Logo
-            html.Img(src="/assets/logo.png", style={'height': '5vh', 'paddingRight': '1vw'}),
-            # University Logo
-            html.Img(src="/assets/lille.png", style={'height': '4vh', 'paddingLeft': '1vw', 'paddingRight': '5vw'}),
-
-            # ****************************** Navigation Buttons ******************************
-            html.Div([
-                html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton),
-                html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
-                html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton),
-                html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton),
-            ], style={'paddingRight': '5vw','width': '50%'}),
-            # ********************************************************************************
-
-
-            # ******************************* Date Picker ************************************
-            html.Div([
-                # Dynamic Date Text using the callback function update_date()
-                dcc.Store(id='date-store',data=selected_year),
-                html.H3(id="date-display", style={'fontSize': '1.25rem', 'fontWeight': 'bold'}),
-
-                # Date Slider
-                html.Div([
-                    dcc.RangeSlider(min=2000,max=2025,step=1,
-                        marks={2000: '2000', 2025: '2025'},
-                        value=selected_year,
-                        tooltip={"placement": "bottom", "always_visible": True},
-                        id="date-slider",
-                    )
-                ], style={'padding': '3px', 'flex': '1'})
-
-            ], style={'display': 'flex', 'flexDirection': 'row','width': '20%'}),
-
-            # Alert for maximum countries using the callback function update_page_and_countries()
-            html.Div(id="maximum-alert", style={'padding': '10px'}),
-            # ********************************************************************************
-
-
-            # ******************************** Country Picker ********************************
-            html.Div([
-                # Dropdown Menu for selecting countries using the callback function update_page_and_countries()
-                html.Div([
-                    dbc.DropdownMenu(
-                        label="Select Countries",
-                        # Generate the country menu using the function generate_country_menu() in app_function.py
-                        children= af.generate_country_menu(country_data),
-                        direction="down",
-                        toggle_style={"width": "200px"},
-                        id="country-dropdown"
-                    ),
-                ], style={'padding': '5px', 'flex': '1', 'marginRight': 'auto'}),
-
-                # Button to remove selected countries using the callback function update_page_and_countries()
-                html.Button("Remove Selected Countries",
-                            id="remove-countries-btn",
-                            n_clicks=0,
-                            className="btn btn-danger btn-sm mx-1"),
-            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '20%'}),
-            # ********************************************************************************
-
-
-        ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'backgroundColor': '#f4f4f4', 'width': '100%'})
-    ], style={'display': 'flex', 'flexDirection': 'row'}),
+        html.Div(id="navbar-content", style={"width" : "90%"}),
+        dcc.Store(id="window-width-provider"),
+        dcc.Store(id='date-store', data=[2000,2025]),  # Example selected year data
+        WindowBreakpoints(
+            id="breakpoints",
+            widthBreakpointThresholdsPx=[800, 1200],
+            widthBreakpointNames=["sm", "md", "lg"],
+        ),
+    ], className="responsive-navbar"),
     # ==================================================================================================================
 
 
     # ----------------------------------------------- Section Dashboard ------------------------------------------------
 
-    html.Div(id="page-content", style={'padding': '20px'}),
+    html.Div(id="page-content"),
 
     html.Div([
         dcc.Loading(
             id="loading-indicator2",
-            type="default", # choose from 'circle', 'dot', 'default'
+            type="default",
             children=html.Div(id="status-page")
         ),
         dcc.Store(id='intermediate-value'),
@@ -179,8 +132,168 @@ app.layout = html.Div([
 
 
 
+@app.callback(
+    Output("window-width-provider", "data"),
+    Input("breakpoints", "widthBreakpoint"),
+    State("breakpoints", "width"),
+)
+def breakpoint_width(breakpoint_name: str, window_width: int):
+    """
+    Update the window width based on the current breakpoint.
+
+    This callback function updates the window width based on the current breakpoint name and window width.
+
+    :param breakpoint_name: The name of the current breakpoint (e.g., 'sm', 'md', 'lg').
+    :type breakpoint_name: str
+    :param window_width: The current width of the window.
+    :type window_width: int
+    :return: The current window width.
+    :rtype: int
+    """
+    return window_width
 
 
+def list_button_nav():
+    return [
+        html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton),
+        html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
+        html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton),
+        html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton),
+    ]
+
+def slider_date():
+    return dcc.RangeSlider(min=2000,max=2025,step=1,
+                            marks={2000: '2000', 2025: '2025'},
+                            value=selected_year,
+                            tooltip={"placement": "top", "always_visible": False},
+                            id="date-slider",
+                            )
+
+def dropdown_country():
+    return dc.DropdownMenu(
+        label="Select Countries",
+        # Generate the country menu using the function generate_country_menu() in app_function.py
+        children= af.generate_country_menu(country_data),
+        direction="down",
+        toggle_style={"width": "200px"},
+        id="country-dropdown"
+    )
+
+def button_remove():
+    return html.Button("Remove Selected Countries",
+                       id="remove-countries-btn",
+                       n_clicks=0,
+                       className="btn btn-danger btn-sm mx-1")
+@app.callback(
+    Output("navbar-content", "children"),
+    Input("window-width-provider", "data")
+)
+def adjust_navbar_based_on_width(width):
+    """
+    Adjust the navigation bar content based on the window width.
+
+    :param width: The current width of the window.
+    :type width: int
+    :return: The updated navigation bar content.
+    :rtype: dash.development.base_component.Component
+    """
+    if width > 1000:
+        return html.Div([
+            # ****************************** Navigation Buttons ******************************
+            html.Div(children=list_button_nav(), style={'paddingRight': '5vw','width': '50%'}),
+            # ********************************************************************************
+
+            # ******************************* Date Picker ************************************
+            html.Div([
+                # Dynamic Date Text using the callback function update_date()
+                html.H3(id="date-display", style={'fontSize': '1.25rem', 'fontWeight': 'bold'}),
+                # Date Slider
+                html.Div(children=[slider_date()], style={'padding': '3px', 'flex': '1'})
+            ], style={'display': 'flex', 'flexDirection': 'row','width': '25%'}),
+
+            # Alert for maximum countries using the callback function update_page_and_countries()
+            html.Div(id="maximum-alert", style={'padding': '10px'}),
+            # ********************************************************************************
+
+
+            # ******************************** Country Picker ********************************
+            html.Div([
+                # Dropdown Menu for selecting countries using the callback function update_page_and_countries()
+                html.Div([dc.DropdownMenu(
+                    label="Select Countries",
+                    # Generate the country menu using the function generate_country_menu() in app_function.py
+                    children= af.generate_country_menu(country_data),
+                    direction="down",
+                    toggle_style={"width": "200px"},
+                    id="country-dropdown"
+                )], style={'padding': '5px', 'flex': '1', 'marginRight': 'auto'}),
+                # Button to remove selected countries using the callback function update_page_and_countries()
+                button_remove()
+            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '25%'}),
+            # ********************************************************************************
+
+        ],style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'})
+    else:
+        return html.Div([
+            # The button to open the menu
+            dc.Button("Open Menu", id="open-menu-btn", color="primary", style={"width": "100%"}),
+
+            # Modal that will act as the sliding menu
+            dc.Modal(
+                [
+                    dc.ModalHeader(
+                        dc.Button("Close", id="close-menu-btn", color="secondary", className="ml-auto")
+                    ),
+                    dc.ModalBody(
+                        [
+                            # ****************************** Navigation Buttons ******************************
+                            html.H3("Navigation Buttons"),
+                            html.Div(children=[
+                                html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                                html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                                html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                                html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                            ], style={'paddingRight': '5vw', 'width': '100%', 'marginTop': '10px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center'}),
+                            # ********************************************************************************
+
+                            # ******************************* Date Picker ************************************
+                            html.Div([
+                                html.H3(id="date-display", style={'fontSize': '1rem', 'fontWeight': 'bold'}),
+                                html.Div(children=[slider_date()], style={'padding': '3px', 'flex': '1'})
+                            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'}),
+
+                            html.Div(id="maximum-alert", style={'padding': '10px'}),
+                            # ********************************************************************************
+
+                            # ******************************** Country Picker ********************************
+                            html.Div([
+                                # Dropdown Menu for selecting countries using the callback function update_page_and_countries()
+                                html.Div([dropdown_country()], style={'padding': '5px', 'flex': '1', 'marginRight': 'auto'}),
+                                # Button to remove selected countries using the callback function update_page_and_countries()
+                                button_remove()
+                            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'}),
+                            # ********************************************************************************
+                        ]
+                    ),
+                ],
+                id="menu-modal",
+                is_open=False,  # Initially closed
+                size="lg",  # You can set it to large or full screen
+                style={"padding": "0", "maxWidth": "100%", "width": "100%", "height": "100%", "backgroundColor": "#f4f4f4"}
+            ),
+        ])
+
+
+# Callbacks for opening and closing the menu
+@app.callback(
+    Output("menu-modal", "is_open"),
+    [Input("open-menu-btn", "n_clicks"), Input("close-menu-btn", "n_clicks")],
+    [State("menu-modal", "is_open")]
+)
+def toggle_menu(open_clicks, close_clicks, is_open):
+    if open_clicks or close_clicks:
+        return not is_open
+    return is_open
 
 @app.callback(
     Output("date-display", "children"),
@@ -262,7 +375,6 @@ def update_page_and_countries(*args):
 
     # If a trigger source is detected
     if triggered_id != "date-store":
-
         # Check the trigger source
         match triggered_id:
             case "health-btn": # If the trigger source is the Health Status button
@@ -293,7 +405,7 @@ def update_page_and_countries(*args):
                     # Check if the maximum number of countries is selected
                     if len(selected_countries_list) >= 4:
                         # If the maximum number of countries is selected, display an alert message
-                        alert = dbc.Alert(
+                        alert = dc.Alert(
                             [
                                 html.I(className="bi bi-exclamation-triangle-fill me-2"),  # Bootstrap warning icon
                                 "Maximum of 4 countries can be selected"
@@ -331,7 +443,7 @@ def update_page_and_countries(*args):
     return (
         html.H4(f"{title_page} : {countries}"),
         alert,
-        display_status_page(),  # Passez selected_year ici
+        display_status_page(),
         selected_countries_list
     )
 
@@ -397,7 +509,6 @@ def update_map(*args):
         hovertext = geo_df["NAME"]
 
         colorscale = [[i / max(1, num_colors - 1), color_palette[i % len(color_palette)]] for i in range(num_colors)]
-        print(colorscale)
     else:
         map = geojson_data
 
@@ -482,7 +593,7 @@ def display_status_page():
 
         case "Risk Factors Indicators":
             return af.generate_factors_risk_status_page(selected_countries_list, selected_year)
-        
+
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page(selected_countries_list)
 
@@ -508,7 +619,6 @@ def display_status_page():
 
 # Run the Dash app
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8050))  # Utilisez 8050 comme port par défaut
-    #app.run_server(host="0.0.0.0", port=port, debug=False)
-    app.run_server(debug=True)
+    app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
+    #app.run_server(debug=True)
 

@@ -360,64 +360,38 @@ def generate_health_status_page(selected_countries_list, selected_year):
     :rtype: dash.development.base_component.Component
     """
 
-    graph3=update_MMR100k_graph(selected_countries_list, selected_year)
     graph4=update_SH_DYN_MORT_graph(selected_countries_list, selected_year)
-    graph5=update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year)
     # Colonne de gauche contenant la carte
-    map_column = html.Div([
-        # Div pour la carte
-        html.Div([
-            dcc.Loading(
-                id="loading-indicator",
-                type="circle",
-                children=[
-                    dcc.Graph(
-                        id="world-map",
-                        config={'scrollZoom': True, 'displayModeBar': False},
-                        figure={},
-                        selectedData=None,
-                        style={'height': '40vh', 'width': '100%'}
-                    )
-                ]
-            ),
-            graph3
+    column_1 = html.Div([
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},
+                    selectedData=None,
+                    style={'height': '40%', 'width': '100%'}
+                ),
+                graph4
+            ], className="responsive-column_1")
 
-        ], style={'width': '50vh', 'height': '100vh', 'display': 'inline-block',
-                  'verticalAlign': 'top', 'overflow': 'hidden'}),
 
-        # Graphiques (droite)
-        html.Div([
-            graph4,
-            graph5
-        ], style={'width': '60%', 'height': '40vh', 'display': 'inline-block', 'paddingLeft': '10px'})
-    ], style={'display': 'flex', 'width': '100%', 'padding': '2px'})
+    graph3=update_MMR100k_graph(selected_countries_list, selected_year)
+    graph5=update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year)
+
+    column_2 = html.Div(children=[graph3,graph5],
+                        className="responsive-column_2")
 
     # Génération des graphiques
     graph1 = update_WHOSIS_000001_graph(selected_countries_list, selected_year)
     graph2 = update_WHOSIS_000002_graph(selected_countries_list, selected_year)
 
     # Colonne de droite contenant les graphiques
-    graphs_column = html.Div([
-        graph1,
-        graph2,
-    ], style={
-        'width': '40%',
-        'display': 'flex',
-        'flexDirection': 'column',
-        'gap': '5px',
-        'padding': '5px'
-    })
+    column_3 = html.Div(children=[graph1,graph2,],
+                        className="responsive-column_2")
 
     # Conteneur principal en ligne (deux colonnes)
     layout = html.Div([
-        map_column,
-        graphs_column
-    ], style={
-        'display': 'flex',
-        'flexDirection': 'row',
-        'width': '100%',
-        'height': '100%',
-    })
+        column_1,column_2,column_3]
+        ,className="responsive-container")
 
     return layout
 
@@ -513,7 +487,7 @@ def update_MMR100k_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
+    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40%%'})
 
 #------------------------------------------------- WHOSIS_000001 Graph ------------------------------------------------#
 
@@ -607,7 +581,7 @@ def update_WHOSIS_000001_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
+    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40%%'})
 
 #------------------------------------------------- WHOSIS_000002 Graph ------------------------------------------------#
 
@@ -702,7 +676,7 @@ def update_WHOSIS_000002_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='health-status-graph', figure=fig,style={'width': '100%', 'height': '40vh'})
+    return dcc.Graph(id='health-status-graph', figure=fig,style={'width': '100%', 'height': '40%%'})
 
 #-------------------------------------------------- SH_DYN_MORT Graph -------------------------------------------------#
 
@@ -812,7 +786,7 @@ def update_SH_DYN_MORT_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='mortality-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
+    return dcc.Graph(id='mortality-graph', figure=fig, style={'width': '100%', 'height': '40%%'})
 
 #--------------------------------------------- SH_DYN_MORT_neonatal Graph ---------------------------------------------#
 
@@ -913,7 +887,7 @@ def update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='mortality-neo-graph', figure=fig, style={'width': '100%', 'height': '40vh'})
+    return dcc.Graph(id='mortality-neo-graph', figure=fig, style={'width': '100%', 'height': '40%%'})
 
 
 ########################################################################################################################
@@ -991,18 +965,6 @@ def generate_health_systems_page(selected_countries_list, selected_year):
         death_graph
     ], style={
         'display': 'flex',
-        'flexDirection': 'row',
-        'alignItems': 'center',
-        'justifyContent': 'center',
-        'padding': '10px',
-        'width': '100%'
-    })
-
-    row_health_systems = html.Div([
-        map,
-        graphs,
-    ], style={
-        'display': 'flex',
         'flexDirection': 'column',
         'alignItems': 'center',
         'justifyContent': 'center',
@@ -1010,7 +972,19 @@ def generate_health_systems_page(selected_countries_list, selected_year):
         'width': '100%'
     })
 
-    return row_health_systems
+    layout = html.Div([
+        map,
+        graphs,
+    ], style={
+        'display': 'flex',
+        'flexDirection': 'row',
+        'alignItems': 'center',
+        'justifyContent': 'center',
+        'padding': '10px',
+        'width': '100%'
+    })
+
+    return layout
 
 
 
@@ -1091,10 +1065,6 @@ def get_health_systems_data_uhc(selected_countries_list, selected_year) :
 
     return df_uhc
 
-
-
-
-
 def update_health_systems_graph_birth(selected_countries_list, selected_year) :
     if selected_countries_list :
         df_birth = get_health_systems_data_birth(selected_countries_list, selected_year)
@@ -1114,7 +1084,7 @@ def update_health_systems_graph_birth(selected_countries_list, selected_year) :
     else :
         fig = {}
 
-    return dcc.Graph(id = 'update_health_systems_graph', figure=fig, style={'width': '60%', 'height': '40vh'})
+    return dcc.Graph(id = 'update_health_systems_graph', figure=fig, style={'width': '40%', 'height': '40%'})
 
 def update_health_systems_graph_death(selected_countries_list, selected_year) :
     if selected_countries_list :
@@ -1134,7 +1104,7 @@ def update_health_systems_graph_death(selected_countries_list, selected_year) :
     else :
         fig = {}
 
-    return dcc.Graph(id='update_health_systems_graph_death', figure=fig, style={'width': '50%', 'height': '40vh'})
+    return dcc.Graph(id='update_health_systems_graph_death', figure=fig, style={'width': '40%', 'height': '40%'})
 
 
 
