@@ -1,11 +1,5 @@
 import dash_bootstrap_components as dbc
-from dash import dcc, html
-import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-import os
-
-from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
 
 color_palette = px.colors.qualitative.Plotly

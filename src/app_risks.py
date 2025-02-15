@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 from sqlalchemy import create_engine, MetaData, select, and_
 from dash import dcc, html
-import dash_bootstrap_components as dbc
 
 
 INDICATORS_MAPPING = {
