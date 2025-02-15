@@ -16,6 +16,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 
+from src.app_coverage import generate_coverage_status_page, update_indicator_graph, get_indicator_data
+
 
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
 
@@ -414,6 +416,35 @@ def update_map(*args):
     return fig
 
 
+def display_status_page():
+    """
+    Display the status page based on the selected title.
+
+    :return: The content of the status page based on the selected title.
+    :rtype: dash.development.base_component.Component
+    """
+
+    global title_page
+    global selected_countries_list
+
+    match title_page:
+        case "Health Status Indicators":
+            return af.generate_health_status_page(selected_countries_list)
+        case "Risk Factors Indicators":
+            return af.generate_factors_risk_status_page(selected_countries_list)
+
+        case "Service Coverage Indicators":
+            return generate_coverage_status_page(selected_countries_list, selected_year)
+
+        case "Health Systems":
+            return af.generate_health_systems_page(selected_countries_list)
+
+        case _:
+            return None
+
+
+
+
 #################################################### Coverage Status Page ################################################
 
 
@@ -444,7 +475,7 @@ def update_indicator(selected_category, indicator_code, selected_year, selected_
             'WHS3_41': "Diphtheria - number of reported cases"
         }
         indicator_title = indicator_titles.get(indicator_code, "Indicator")
-        return af.update_indicator_graph(selected_countries_list, selected_year, indicator_code, indicator_title)
+        return update_indicator_graph(selected_countries_list, selected_year, indicator_code, indicator_title)
     except Exception as e:
         print("Erreur dans uptade_indicator :", e)
         # Retourner un message d'erreur dans l'interface si besoin :
@@ -481,7 +512,7 @@ def update_indicator_options(selected_category):
 
 # Met à jour dynamiquement la bannière, en affichant la liste des pays sélectionnés
 @app.callback(
-    Output("title-banner", "children"),  
+    Output("title-banner", "children"),
     Input("intermediate-value", "data")  # Récupère la liste des pays sélectionnés
 )
 def update_banner_text(selected_countries):
@@ -517,10 +548,10 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
                 if isinstance(country, dict):
                     all_countries.append(country)
     print("Tous les pays :", [c["name"] for c in all_countries])
-    
+
     if indicator_code is not None:
         # Récupérer les données pour TOUS les pays
-        df = af.get_indicator_data(all_countries, selected_year, indicator_code)
+        df = get_indicator_data(all_countries, selected_year, indicator_code)
         if df.empty:
             fig = go.Figure()
             fig.add_annotation(text="Aucune donnée disponible",
@@ -535,10 +566,10 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
             else:
                 # Trier par valeur décroissante et prendre les 5 premiers
                 df_top5 = df_year.sort_values(by="value", ascending=False).head(5)
-    
+
             # Trier par valeur décroissante et prendre les 5 premiers
             df_top5 = df_year.sort_values(by="value", ascending=False).head(5)
-            # Construction du titre personnalisé 
+            # Construction du titre personnalisé
             if indicator_code == 'HIV_0000000001':
                 title_text = f"Top 5 countries with the highest estimated number of people <br>(all ages combined) living with HIV <br> from 2000 to {selected_year} overall"
             elif indicator_code == 'MALARIA_EST_INCIDENCE':
@@ -572,7 +603,7 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
             figure=fig,
             config={'displayModeBar': False},
             style={'width': '100%', 'height': '600'}
-    )
+        )
     else:
         return html.Div("Sélectionnez un indicateur")
 
@@ -583,10 +614,10 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
 @app.callback(
     Output('selected-country-average-container', 'children'),
     [
-         Input('data-category', 'value'),
-         Input('specific-indicator', 'value'),
-         Input('date-slider', 'value'),
-         Input('intermediate-value', 'data')
+        Input('data-category', 'value'),
+        Input('specific-indicator', 'value'),
+        Input('date-slider', 'value'),
+        Input('intermediate-value', 'data')
     ]
 )
 def update_country_average(selected_category, indicator_code, selected_year, selected_countries_list):
@@ -594,44 +625,44 @@ def update_country_average(selected_category, indicator_code, selected_year, sel
     print(" - Indicateur :", indicator_code)
     print(" - Année :", selected_year)
     print(" - Pays sélectionnés :", selected_countries_list)
-    
+
     # Si aucun pays n'est sélectionné, afficher un message
     if not selected_countries_list:
-         return html.Div("Aucun pays sélectionné", style={'textAlign': 'center'})
-    
+        return html.Div("Aucun pays sélectionné", style={'textAlign': 'center'})
+
     # Pour chaque pays sélectionné, récupérer les données pour l'année sélectionnée
     averages = []
     for country in selected_countries_list:
-         # On appelle get_indicator_data pour un seul pays dans une liste
-         df = af.get_indicator_data([country], selected_year, indicator_code)
-         # Filtrer les données pour l'année exacte
-         df_year = df[df["year_recorded"] == selected_year]
-         if not df_year.empty:
-             avg_value = df_year["value"].mean()
-         else:
-             avg_value = None
-         averages.append((country["name"], avg_value))
-    
+        # On appelle get_indicator_data pour un seul pays dans une liste
+        df = get_indicator_data([country], selected_year, indicator_code)
+        # Filtrer les données pour l'année exacte
+        df_year = df[df["year_recorded"] == selected_year]
+        if not df_year.empty:
+            avg_value = df_year["value"].mean()
+        else:
+            avg_value = None
+        averages.append((country["name"], avg_value))
+
     # Créer un DataFrame à partir des moyennes
     df_avg = pd.DataFrame(averages, columns=["Country", "Average"])
     df_avg = df_avg[df_avg["Average"].notna()]
-    
+
     if df_avg.empty:
-         fig = go.Figure()
-         fig.add_annotation(text="Aucune donnée pour les pays sélectionnés", 
-                            xref="paper", yref="paper", showarrow=False)
+        fig = go.Figure()
+        fig.add_annotation(text="Aucune donnée pour les pays sélectionnés",
+                           xref="paper", yref="paper", showarrow=False)
     else:
-         # Créer un diagramme en barres verticales
-         fig = px.bar(df_avg, x="Country", y="Average", 
-                      title=f"Average per country ({selected_year})",
-                      labels={"Average": "Average value"})
-         fig.update_layout(title_x=0.5)
-    
+        # Créer un diagramme en barres verticales
+        fig = px.bar(df_avg, x="Country", y="Average",
+                     title=f"Average per country ({selected_year})",
+                     labels={"Average": "Average value"})
+        fig.update_layout(title_x=0.5)
+
     return dcc.Graph(
-         figure=fig,
-         config={'displayModeBar': False},
-         style={'width':'80%', 'height':'600'}
-    )   
+        figure=fig,
+        config={'displayModeBar': False},
+        style={'width':'80%', 'height':'600'}
+    )
 
 #---------------------------------------------------- Graphique moyenne mondiale ---------------------------------------------------#
 
@@ -661,7 +692,7 @@ def update_global_average(selected_category, indicator_code, selected_year):
 
     # Vérifier qu'un indicateur est sélectionné
     if indicator_code is not None:
-        df = af.get_indicator_data(all_countries, selected_year, indicator_code)
+        df = get_indicator_data(all_countries, selected_year, indicator_code)
         # Filtrer pour l'année sélectionnée
         df_year = df[df["year_recorded"] == selected_year]
         if df_year.empty:
@@ -678,7 +709,7 @@ def update_global_average(selected_category, indicator_code, selected_year):
                 'WHS3_41': "Diphteria - number of reported cases"
             }
             desc = indicator_descriptions.get(indicator_code, "")
-            # Afficher le titre, le chiffre et la description 
+            # Afficher le titre, le chiffre et la description
             fig = go.Figure(go.Indicator(
                 mode="number",
                 value=global_avg,
@@ -699,45 +730,7 @@ def update_global_average(selected_category, indicator_code, selected_year):
 ########################################################################################################################
 
 
-def display_status_page():
-    """
-    Display the status page based on the selected title.
 
-    :return: The content of the status page based on the selected title.
-    :rtype: dash.development.base_component.Component
-    """
-
-    global title_page
-    global selected_countries_list
-
-    match title_page:
-        case "Health Status Indicators":
-            return af.generate_health_status_page(selected_countries_list)
-        case "Risk Factors Indicators":
-            return af.generate_factors_risk_status_page(selected_countries_list)
-
-        case "Service Coverage Indicators":
-            return af.generate_coverage_status_page(selected_countries_list, selected_year)
-
-        case "Health Systems":
-            return af.generate_health_systems_page(selected_countries_list)
-
-        case _:
-            return None
-
-
-##########################Health Status Page############################################
-
-
-
-
-
-
-
-
-
-
-#######################################################################################
 
 port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
