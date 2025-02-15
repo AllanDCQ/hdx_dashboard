@@ -37,7 +37,8 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             color='country_name',
             title=INDICATORS_MAPPING['NT_ANT_WHZ_PO2'],
             markers=True,
-            line_shape='linear'
+            line_shape='linear',
+            template='plotly'
         )
         fig1.update_layout(
             title={
@@ -51,22 +52,22 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             margin=dict(t=80),
             xaxis_title='Year',
             yaxis_title='Value',
-            legend_title='Country',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            legend_title='Country'
         )
 
     # 2. Low birth weight
     fig_lbw = {}
     if not df.empty:
-        lbw_df = df[df['id_indicator'] == 'NT_BW_LBW']
-        fig_lbw = px.bar(
+        lbw_df = df[df['id_indicator'] == 'NT_BW_LBW'].sort_values(by=['year_recorded'])
+        fig_lbw = px.line(
             lbw_df,
             x='year_recorded',
             y='value',
             color='country_name',
-            barmode='group',
-            title=INDICATORS_MAPPING['NT_BW_LBW']
+            title=INDICATORS_MAPPING['NT_BW_LBW'],
+            markers=True,
+            line_shape='linear',
+            template='plotly'
         )
         fig_lbw.update_layout(
             title={
@@ -80,11 +81,7 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             margin=dict(t=80),
             xaxis_title='Year',
             yaxis_title='Proportion (%)',
-            legend_title='Country',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            bargap=0.15,
-            bargroupgap=0.1
+            legend_title='Country'
         )
 
     # 3. Water services (safely managed)
@@ -97,7 +94,8 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             y='value',
             size='value',
             color='country_name',
-            title=INDICATORS_MAPPING['WS_PPL_W-PRE']
+            title=INDICATORS_MAPPING['WS_PPL_W-PRE'],
+            template='plotly'
         )
         fig_wpre.update_layout(
             title={
@@ -111,9 +109,7 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             margin=dict(t=80),
             xaxis_title='Year',
             yaxis_title='Proportion (%)',
-            legend_title='Country',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            legend_title='Country'
         )
 
     # 4. Water services (basic)
@@ -127,6 +123,7 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             color='country_name',
             barmode='group',
             title=INDICATORS_MAPPING['WS_PPL_W-B'],
+            template='plotly',
             category_orders={"year_recorded": sorted(wb_df['year_recorded'].unique())}
         )
         fig_wb.update_layout(
@@ -142,8 +139,6 @@ def generate_factors_risk_status_page(selected_countries_list, selected_year):
             xaxis_title='Year',
             yaxis_title='Proportion (%)',
             legend_title='Country',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
             bargap=0.15,
             bargroupgap=0.1
         )
@@ -203,7 +198,6 @@ def get_risk_factors_data(country_codes, selected_year):
         print("La table 'Timed_Indicators' n'a pas été trouvée dans la base de données.")
         return pd.DataFrame()
 
-    # Construction du filtre avec les pays en minuscules
     indicator_filter = timed_indicators.c.id_indicator.in_(INDICATORS_MAPPING.keys())
     country_filter = timed_indicators.c.id_country.in_(country_codes)
     year_filter = timed_indicators.c.year_recorded.between(selected_year[0], selected_year[1])
