@@ -12,6 +12,8 @@ import dash_bootstrap_components as dc
 import numpy as np
 
 import app_function as af
+from src.app_risks import generate_factors_risk_status_page
+from src.app_status import generate_health_status_page
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -589,10 +591,10 @@ def display_status_page():
 
     match title_page:
         case "Health Status Indicators":
-            return af.generate_health_status_page(selected_countries_list,selected_year)
+            return generate_health_status_page(selected_countries_list,selected_year)
 
         case "Risk Factors Indicators":
-            return af.generate_factors_risk_status_page(selected_countries_list, selected_year)
+            return generate_factors_risk_status_page(selected_countries_list, selected_year)
 
         case "Service Coverage Indicators":
             return af.generate_coverage_status_page(selected_countries_list)

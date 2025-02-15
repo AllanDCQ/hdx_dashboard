@@ -4,7 +4,7 @@
     flex-direction: row;
     align-items: center;
     padding: 10px;
-    height: 15vh;
+    height: 10vh;
     width: 100%;
     background-color: #f4f4f4;
     z-index: 1000;
@@ -37,19 +37,50 @@
     flex-direction: column;
 }
 
+/* ---------------------------------------------------- Page Risk --------------------------------------------------- */
+.responsive-row_risk {
+    display: flex;
+    flex-direction: row;
+    padding: 5px;
+    width: 100%;
+}
+
+.responsive-map_risk {
+    width: 40%;
+    height: 50%;
+    margin-bottom: 20px;
+}
+
+.responsive-column_risk-1 {
+    width: 60%;
+    height: 50%;
+}
+
+.responsive-column_risk-2 {
+    width: 33%;
+    height: 50%;
+}
+
+
+
 /* Appliquer flex-direction: column sur les petits écrans */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1000px) {
+
+    .responsive-row_risk,
     .responsive-container {
         flex-direction: column;
-        height: 300vh;
+        height: auto;
     }
-    .responsive-column_1 {
-        width: 100%;
-        height: 100vh;
-    }
+
+    .responsive-map_risk,
+    .responsive-column_risk-1,
+    .responsive-column_risk-2,
+    .responsive-map_risk,
+    .responsive-column_1,
     .responsive-column_2 {
         width: 100%;
-        height: 100vh;
+        height: 40%;
     }
+
 }
 
