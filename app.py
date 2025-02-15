@@ -331,7 +331,7 @@ def update_page_and_countries(*args):
     return (
         html.H4(f"{title_page} : {countries}"),
         alert,
-        display_status_page(selected_year),  # Passez selected_year ici
+        display_status_page(),  # Passez selected_year ici
         selected_countries_list
     )
 
@@ -465,7 +465,7 @@ def update_map_health_systems() :
 
     return fig_map
 
-def display_status_page(selected_year):
+def display_status_page():
     """
     Display the status page based on the selected title.
 
@@ -509,6 +509,6 @@ def display_status_page(selected_year):
 # Run the Dash app
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8050))  # Utilisez 8050 comme port par défaut
-    app.run_server(host="0.0.0.0", port=port, debug=False)
-    #app.run_server(debug=True)
+    #app.run_server(host="0.0.0.0", port=port, debug=False)
+    app.run_server(debug=True)
 

@@ -4,13 +4,13 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import os
-from risk_factors_graphs import generate_risk_factors_page
-from risk_factors_queries import get_risk_factors_data
 
 from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
 
 color_palette = px.colors.qualitative.Plotly
+os.environ["DATABASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
+
 
 def generate_country_menu(country_data):
     """
@@ -71,13 +71,278 @@ def get_country_name_by_alpha3(alpha3, country_data):
                  if isinstance(country, dict) and country["alpha3"] == alpha3), None)
 
 
+
+
+INDICATORS_MAPPING = {
+        "NT_ANT_WHZ_PO2": "Weight-for-height >+2 SD (overweight)",
+        "NT_BW_LBW": "Prevalence of low birth weight among <br> new-borns",
+        "WS_PPL_W-PRE": "Proportion of population using safely managed <br> drinking water services",
+        "WS_PPL_W-B": "Proportion of population using basic drinking water services"
+    }
+
 def generate_factors_risk_status_page(selected_countries_list, selected_year):
     """Génère la page des facteurs de risque"""
     # Obtenir les codes pays au format correct
     country_codes = [c["alpha3"].upper() for c in selected_countries_list] if selected_countries_list else None
-    
-    # Générer la page avec les graphiques
-    return generate_risk_factors_page(selected_year, country_codes)
+
+    df = get_risk_factors_data(country_codes) if country_codes else get_risk_factors_data()
+    if df.empty:
+        return html.Div("No data available for selected countries")
+
+    # Récupération des noms des pays
+    country_names = get_country_names()
+    df['country_name'] = df['id_country'].map(country_names)
+
+    # Création des graphiques
+    # 1. Graphique en haut à droite - Line plot pour Weight-for-height
+    weight_height_df = df[df['id_indicator'] == 'NT_ANT_WHZ_PO2']
+    # Tri des données par année avant de créer le graphique
+    weight_height_df = weight_height_df.sort_values(by=['year_recorded'])
+    fig1 = px.line(weight_height_df,
+                   x='year_recorded',
+                   y='value',
+                   color='country_name',
+                   title=INDICATORS_MAPPING['NT_ANT_WHZ_PO2'],
+                   markers=True,
+                   line_shape='linear')
+
+    # Ajustement du titre pour qu'il passe à la ligne
+    fig1.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['NT_ANT_WHZ_PO2'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Value',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+
+    # 2-4. Les trois graphiques en bas
+    figures_bottom = []
+
+    # Graphique en barres groupées pour la prévalence de bas poids chez les nouveau-nés
+    lbw_df = df[df['id_indicator'] == 'NT_BW_LBW']
+    fig_lbw = px.bar(lbw_df,
+                     x='year_recorded',
+                     y='value',
+                     color='country_name',
+                     barmode='group',
+                     title=INDICATORS_MAPPING['NT_BW_LBW'])
+    fig_lbw.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['NT_BW_LBW'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Proportion (%)',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        bargap=0.15,  # Espacement entre les barres des pays
+        bargroupgap=0.1  # Espacement entre les barres des années
+    )
+    figures_bottom.append(fig_lbw)
+
+    # Graphique en nuage de points pour la proportion de population ayant accès à l'eau potable sûre
+    wpre_df = df[df['id_indicator'] == 'WS_PPL_W-PRE']
+    fig_wpre = px.scatter(wpre_df,
+                          x='year_recorded',
+                          y='value',
+                          size='value',
+                          color='country_name',
+                          title=INDICATORS_MAPPING['WS_PPL_W-PRE'])
+    fig_wpre.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['WS_PPL_W-PRE'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Proportion (%)',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    figures_bottom.append(fig_wpre)
+
+    # Graphique en histogramme pour la proportion de population ayant accès à l'eau potable de base
+    wb_df = df[df['id_indicator'] == 'WS_PPL_W-B']
+    fig_wb = px.histogram(wb_df,
+                          x='year_recorded',
+                          y='value',
+                          color='country_name',
+                          barmode='group',
+                          title=INDICATORS_MAPPING['WS_PPL_W-B'],
+                          labels={'year_recorded': 'Year', 'value': 'Proportion (%)', 'country_name': 'Country'},
+                          category_orders={"year_recorded": sorted(wb_df['year_recorded'].unique())})
+    fig_wb.update_layout(
+        title={
+            'text': INDICATORS_MAPPING['WS_PPL_W-B'],
+            'yanchor': 'top',
+            'y': 0.95,
+            'xanchor': 'center',
+            'x': 0.5,
+            'pad': {'t': 20}
+        },
+        margin=dict(t=80),  # Ajout d'un espace supérieur pour le titre
+        xaxis_title='Year',
+        yaxis_title='Proportion (%)',
+        legend_title='Country',
+        font=dict(size=12, family='Arial, sans-serif'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        bargap=0.15,  # Espacement entre les barres des années
+        bargroupgap=0.1  # Espacement entre les barres des pays
+    )
+    figures_bottom.append(fig_wb)
+
+    # Création du layout avec la carte existante
+    map_div = html.Div([
+        dcc.Loading(
+            id="loading-indicator",
+            type="circle",
+            children=[
+                dcc.Graph(
+                    id="world-map",
+                    config={'scrollZoom': True, 'displayModeBar': False},
+                    figure={},
+                    selectedData=None
+                )
+            ]
+        )
+    ], style={'width': '100%', 'height': '40vh', 'marginBottom': '60px'})  # Augmentation de marginBottom pour décaler la carte
+
+    # Layout complet
+    return [
+        # Première rangée avec la carte
+        html.Div([
+            map_div
+        ], style={'display': 'flex', 'flexDirection': 'row', 'marginBottom': '20px'}),
+
+        # Deuxième rangée avec deux graphiques
+        html.Div([
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=figures_bottom[0])
+            )), width=6, style={'marginRight': '20px'}),
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=figures_bottom[1])
+            )), width=6)
+        ], style={'display': 'flex', 'flexDirection': 'row', 'marginTop': '60px'}),  # Augmentation de marginTop pour décaler les graphiques
+
+        # Troisième rangée avec deux graphiques
+        html.Div([
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=figures_bottom[2])
+            )), width=6, style={'marginRight': '20px'}),
+            dbc.Col(dbc.Card(dbc.CardBody(
+                dcc.Graph(figure=fig1)
+            )), width=6)
+        ], style={'display': 'flex', 'flexDirection': 'row', 'marginTop': '40px'})  # Augmentation de marginTop pour décaler les graphiques
+    ]
+
+
+def get_risk_factors_data(country_codes=None):
+    """
+    Récupère les données des facteurs de risque.
+    Si country_codes est fourni, ne récupère que ces pays.
+    Sinon, récupère tous les enregistrements pour les indicateurs spécifiés.
+    """
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+
+    try:
+        timed_indicators = metadata.tables['Timed_Indicators']
+    except KeyError:
+        print("La table 'Timed_Indicators' n'a pas été trouvée dans la base de données.")
+        return pd.DataFrame()
+
+    # Constitution du ou des filtres
+    indicator_filter = timed_indicators.c.id_indicator.in_(INDICATORS_MAPPING.keys())
+    if country_codes:
+        country_codes = [code.lower() for code in country_codes]  # Convertir en minuscules
+        country_filter = timed_indicators.c.id_country.in_(country_codes)
+        final_filter = and_(country_filter, indicator_filter)
+    else:
+        final_filter = indicator_filter
+
+    stmt = select(
+        timed_indicators.c.id_country,
+        timed_indicators.c.year_recorded,
+        timed_indicators.c.id_indicator,
+        timed_indicators.c.value,
+        timed_indicators.c.sexe
+    ).where(final_filter)
+
+    try:
+        with engine.connect() as conn:
+            df = pd.read_sql(stmt, conn)
+            return df
+    except Exception as e:
+        print(f"Erreur lors de l'exécution de la requête : {e}")
+        return pd.DataFrame()
+
+def get_country_names():
+    """
+    Récupère les noms des pays depuis la base de données.
+    Retourne un dictionnaire {id_country: country_name}.
+    """
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+
+    try:
+        country_table = metadata.tables['Country']
+    except KeyError:
+        print("La table 'Country' n'a pas été trouvée dans la base de données.")
+        return {}
+
+    stmt = select(country_table.c.id_country, country_table.c.country_name)
+    with engine.connect() as conn:
+        result = conn.execute(stmt).fetchall()
+
+    return {row[0]: row[1] for row in result}
+
+def get_available_years_and_countries():
+    """
+    Récupère les années et les pays disponibles dans la base de données.
+    """
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+
+    try:
+        timed_indicators = metadata.tables['Timed_Indicators']
+    except KeyError:
+        print("La table 'Timed_Indicators' n'a pas été trouvée dans la base de données.")
+        return [], []
+
+    with engine.connect() as conn:
+        years = conn.execute(select(timed_indicators.c.year_recorded.distinct())).fetchall()
+        countries = conn.execute(select(timed_indicators.c.id_country.distinct())).fetchall()
+
+    years = [year[0] for year in years]
+    countries = [country[0] for country in countries]
+    return years, countries
 
 
 #################################################### Health Status Page ################################################
@@ -655,30 +920,19 @@ def update_SH_DYN_MORT_neo_graph(selected_countries_list, selected_year):
 
 
 
-    map = html.Div([
-        dcc.Loading(
-            id="loading-indicator",  # ID pour l'indicateur de chargement
-            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
-            children=[
-                dcc.Graph(
-                    id="world-map",
-                    config={'scrollZoom': True, 'displayModeBar': False},
-                    figure={},  # This initializes the map when the app loads
-                    selectedData=None  # We use this property to capture selected country data
-                )
-            ]
-        )
-    ], style={'width': '60%', 'height': '40vh'})
-
-    something = html.Div([html.H4("Health status : Under Construction")], style={'width': '40%', 'height': '80vh'})
-
-    row_1 = html.Div([
-        map,
-        something,
-    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
 
 
-    return row_1
+
+
+
+
+
+
+
+
+
+
+
 
 def generate_coverage_status_page(selected_countries_list):
     map = html.Div([
