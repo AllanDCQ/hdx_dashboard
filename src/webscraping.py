@@ -165,7 +165,7 @@ class FetchPageSingle(Fetch):
 
         id_countries_to_update = []
 
-        engine = create_engine(os.getenv("BASE_URL"))
+        engine = create_engine(os.getenv("DATABASE_URL"))
         with engine.connect() as connection:
             metadata = MetaData()
 
@@ -211,18 +211,15 @@ class FetchPageSingle(Fetch):
         id_countries_to_update = self._check_update_date(indicator,id_countries)
 
         if not id_countries_to_update:
-            print(f"{indicator}: are already up to date for {id_countries}")
             return
-        print(f"For {id_countries_to_update}: Indicator to update: {indicator}")
 
         # Get the name of the country
         countries_names_to_update, not_countries, id_countries_to_update = self._get_name_country(id_countries_to_update)
 
         if not_countries:
-            print(f"{not_countries}: are not in the list of countries")
+            return
 
         if not countries_names_to_update:
-            print(f"{id_countries}: are not in the list of countries")
             return
 
 
@@ -234,8 +231,6 @@ class FetchPageSingle(Fetch):
         for country in id_countries_to_update:
             if any(dataset[column_contry_id] == country):
                 id_countries_to_db.append(country)
-            else:
-                print(f"{country} is not in the dataset")
 
         if id_countries_to_db == []:
             return
@@ -264,7 +259,7 @@ class FetchPageSingle(Fetch):
 
         indicator = Indicator(data_to_update, indicator)
 
-        engine = create_engine(os.getenv("BASE_URL"))
+        engine = create_engine(os.getenv("DATABASE_URL"))
         with engine.begin() as connection:
             indicator.send_data_to_db(engine, connection)
 
@@ -279,7 +274,7 @@ class FetchPageSingle(Fetch):
         :return: A tuple containing the list of country names, the list of IDs that are not countries, and the updated list of country IDs.
         :rtype: tuple[list[str], list[str], list[str]]
         """
-        with open("countries.json", "r") as f:
+        with open("assets/countries.json", "r") as f:
             countries = json.load(f)
 
         name_countries = []
@@ -323,14 +318,14 @@ class FetchPage(Fetch):
     :type dataset_name: str
     """
     def __init__(self, country_id, source_dataset, dataset_index=None, dataset_name=None):
-        super().__init__(source_dataset, dataset_index)
         self.id_country = country_id.lower()
         self.country = self._get_country_name()
         self.dataset_name = dataset_name
+        super().__init__(source_dataset, dataset_index)
 
     def _get_country_name(self):
         #open the json file
-        with open("countries.json", "r") as f:
+        with open("assets/countries.json", "r") as f:
             countries = json.load(f)
 
         # Iterate through the countries to find a match
@@ -353,7 +348,7 @@ class FetchPage(Fetch):
         base_url = "https://data.humdata.org"
         if self.source_dataset == "who-data":
             datasets_url = f"{base_url}/dataset/{self.source_dataset}-for-{self.id_country}"
-        elif self.source_dataset == "unicef-mnch-mmr" :
+        elif self.source_dataset == "world-bank-health-indicators" :
             datasets_url = f"{base_url}/dataset/{self.source_dataset}-for-{self.country.replace(' ', '-').replace(',','').replace("'","-")}"
         else: # world-bank-health-indicators
             datasets_url = f"{base_url}/dataset/{self.source_dataset}"
@@ -395,7 +390,7 @@ class FetchPage(Fetch):
 
     def _check_update_date(self, list_indicators):
 
-        engine = create_engine(os.getenv("BASE_URL"))
+        engine = create_engine(os.getenv("DATABASE_URL"))
         with engine.connect() as connection:
             metadata = MetaData()
 
@@ -440,22 +435,16 @@ class FetchPage(Fetch):
                 if self.dataset_name.lower() in row["title"].lower():
                     self.dataset_index = index
                     break
-            else:
-                print(f"The dataset {self.dataset_name} is not in the list of datasets for {self.country}")
-                return
+
 
         if len(list_indicators_to_update) == 0:
-            print(f"{indicators}: are already up to date")
             return
-
-        print(f"For {self.country}: Indicators to update: {list_indicators_to_update}")
 
         dataset = self._read_csv_from_list()
 
         # check if indicator is in the dataset
         for indicator in list_indicators_to_update[:]:
             if not any(dataset[column_name] == indicator):
-                print(f"{indicator} is not in the dataset")
                 list_indicators_to_update.remove(indicator)
             else:
                 continue
@@ -484,7 +473,7 @@ class FetchPage(Fetch):
 
 
         indicators = Indicators(data_to_update, list_indicators_to_update)
-        engine = create_engine(os.getenv("BASE_URL"))
+        engine = create_engine(os.getenv("DATABASE_URL"))
         with engine.begin() as connection:
             indicators.send_data_to_db(engine, connection)
 

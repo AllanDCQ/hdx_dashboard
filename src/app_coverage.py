@@ -186,7 +186,7 @@ def update_indicator_graph(selected_countries_list, selected_year, indicator_cod
                 color="id_country",
                 color_discrete_map=country_to_color,
                 color_discrete_sequence=px.colors.qualitative.G10,
-                title=f"{indicator_title} in {selected_year[1]}"
+                title=f"{indicator_title} from {selected_year[0]} to {selected_year[1]}"
             )
     else:
         # Message si aucun pays n'est sélectionné

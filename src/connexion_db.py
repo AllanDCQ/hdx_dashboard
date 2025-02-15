@@ -26,7 +26,7 @@ Functions:
         - _fetch_drink_data : Fetches indicators
         - _fetch_birth_data : Fetches indicators
 """
-import webscraping
+import src.webscraping as webscraping
 import json
 import concurrent.futures
 
@@ -61,7 +61,7 @@ def update_all_health_status():
     """
     Updates the health status for all countries by fetching data from various sources.
     """
-    with open("assets/countries.json", "r") as f:
+    with open("../assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [
@@ -136,7 +136,7 @@ def _fetch_world_bank_data(country_id):
                 column_date="Year"
             )
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_id} (World Bank Data): {e}")
+        raise f"Erreur avec {country_id} (World Bank Data): {e}"
 
 def _fetch_unicef_data(country_list):
     """
@@ -160,7 +160,7 @@ def _fetch_unicef_data(country_list):
             column_date = "TIME_PERIOD")
 
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_list} (UNICEF Data): {e}")
+        raise f"Erreur avec {country_list} (UNICEF Data): {e}"
 
 
 ########################################################################################################################
@@ -203,7 +203,7 @@ def update_all_services_coverages():
     """
     Updates the services coverages indicators for all countries by fetching data from various sources.
     """
-    with open("assets/countries.json", "r") as f:
+    with open("../assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [
@@ -239,7 +239,7 @@ def _fetch_hiv_data(country_id):
             column_sexe="DIMENSION (NAME)"
         )
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_id} (WHO Data): {e}")
+        raise f"Erreur avec {country_id} (WHO Data): {e}"
 
 def _fetch_tuberculosis_data(country_id):
     """
@@ -265,7 +265,7 @@ def _fetch_tuberculosis_data(country_id):
             column_sexe="DIMENSION (NAME)"
         )
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_id} (WHO Data): {e}")
+        raise f"Erreur avec {country_id} (WHO Data): {e}"
 
 def _fetch_malaria_data(country_id):
     """
@@ -291,7 +291,7 @@ def _fetch_malaria_data(country_id):
             column_sexe="DIMENSION (NAME)"
         )
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_id} (WHO Data): {e}")
+        raise f"Erreur avec {country_id} (WHO Data): {e}"
 
 def _fetch_immunization_data(country_id):
     """
@@ -319,7 +319,7 @@ def _fetch_immunization_data(country_id):
             column_sexe="DIMENSION (NAME)"
         )
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_id} (WHO Data): {e}")
+        raise f"Erreur avec {country_id} (WHO Data): {e}"
 
 
 ########################################################################################################################
@@ -360,7 +360,7 @@ def update_all_risk_factors():
     """
     Updates the health status for all countries by fetching data from various sources.
     """
-    with open("assets/countries.json", "r") as f:
+    with open("../assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [
@@ -398,7 +398,7 @@ def _fetch_weight_data(country_list):
             column_date = "TIME_PERIOD")
 
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_list} (UNICEF Data): {e}")
+        raise f"Erreur avec {country_list} (UNICEF Data): {e}"
 
     return
 
@@ -424,7 +424,7 @@ def _fetch_drink_safe_data(country_list):
             column_date = "TIME_PERIOD")
 
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_list} (UNICEF Data): {e}")
+        raise f"Erreur avec {country_list} (UNICEF Data): {e}"
 
     return
 
@@ -450,7 +450,7 @@ def _fetch_drink_data(country_list):
             column_date = "TIME_PERIOD")
 
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_list} (UNICEF Data): {e}")
+        raise f"Erreur avec {country_list} (UNICEF Data): {e}"
 
     return
 
@@ -476,7 +476,7 @@ def _fetch_birth_data(country_list):
             column_date = "TIME_PERIOD")
 
     except (AttributeError, ValueError) as e:
-        print(f"Erreur avec {country_list} (UNICEF Data): {e}")
+        raise f"Erreur avec {country_list} (UNICEF Data): {e}"
 
     return
 
@@ -515,7 +515,7 @@ def update_all_health_systems():
     """
     Updates the health status for all countries by fetching data from various sources.
     """
-    with open("assets/countries.json", "r") as f:
+    with open("../assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [

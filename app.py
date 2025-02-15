@@ -15,6 +15,7 @@ from src import app_function as af
 from src.app_risks import generate_factors_risk_status_page
 from src.app_status import generate_health_status_page
 from src.app_systems import generate_health_systems_page, get_health_systems_data_uhc
+import src.connexion_db as cdb
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -110,6 +111,7 @@ app.layout = html.Div([
         html.Div(id="navbar-content", style={"width" : "90%"}),
         dcc.Store(id="window-width-provider"),
         dcc.Store(id='date-store', data=[2000,2025]),  # Example selected year data
+        dcc.Store(id="update-trigger", data=False),
         WindowBreakpoints(
             id="breakpoints",
             widthBreakpointThresholdsPx=[800, 1200],
@@ -331,6 +333,7 @@ def update_date(new_selected_year):
         Output("maximum-alert", "children"),
         Output("status-page", "children"),
         Output("intermediate-value", "data"),
+        Output("update-trigger", "data"),
     [
         Input("health-btn", "n_clicks"),
         Input("risk-btn", "n_clicks"),
@@ -397,7 +400,8 @@ def update_page_and_countries(*args):
                     html.H4(f"{title_page} : No countries selected"),
                     alert,
                     display_status_page(),
-                    selected_countries_list
+                    selected_countries_list,
+                    False
                     )
             case _: # If the trigger source is something else (so a country selection)
 
@@ -424,7 +428,8 @@ def update_page_and_countries(*args):
                             html.H4(f"{title_page} : {', '.join([c['name'] for c in selected_countries_list])}"),
                             alert,
                             display_status_page(),
-                            selected_countries_list
+                            selected_countries_list,
+                            True
                         )
 
                     else :
@@ -445,12 +450,73 @@ def update_page_and_countries(*args):
     else :
         countries = ", ".join([c["name"] for c in selected_countries_list])
 
+    top_title = html.Div([
+        # The title on the left
+        html.H4(f"{title_page} : {countries}", style={'textAlign': 'left', 'paddingLeft': '5vh'}),
+
+        html.Div([
+            html.Div([
+                html.Div(id="update-text", children="Searching for updates"),
+                dcc.Loading(
+                    id="update-loading",
+                    type="circle",
+                    children=[dcc.Store(id="loading-status")],
+                )
+            ], style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'center'}),
+        ], style={'textAlign': 'right', "paddingRight": "5vh"})
+    ], style={
+        'display': 'flex',
+        'alignItems': 'center',
+        'justifyContent': 'space-between',
+    })
+
     return (
-        html.H4(f"{title_page} : {countries}"),
+        top_title,
         alert,
         display_status_page(),
-        selected_countries_list
+        selected_countries_list,
+        True
     )
+
+@app.callback(
+    [Output("update-text", "children"),
+    Output("loading-status", "data")],
+    Input("update-trigger", "data")
+)
+def update_data(trigger_flag):  # We don't need to use this argument, so we just put `_`
+
+    if trigger_flag:
+        global title_page
+
+        list_alpha_3 = [c["alpha3"] for c in selected_countries_list]
+
+        match title_page:
+            case "Health Status Indicators":
+                try:
+                    cdb.update_list_health_status(list_alpha_3)
+                    return html.Span("Data up to date", style={"color": "darkgreen"}), False
+                except:
+                    return html.Span("Update error", style={"color": "darkred"}), False
+            case "Risk Factors Indicators":
+                try:
+                    cdb.update_list_risk_factors(list_alpha_3)
+                    return html.Span("Data up to date", style={"color": "darkgreen"}), False
+                except:
+                    return html.Span("Update error", style={"color": "darkred"}), False
+            case "Service Coverage Indicators":
+                try:
+                    cdb.update_list_services_coverages(list_alpha_3)
+                    return html.Span("Data up to date", style={"color": "darkgreen"}), False
+                except:
+                    return html.Span("Update error", style={"color": "darkred"}), False
+            case "Health Systems":
+                try:
+                    cdb.update_list_health_systems(list_alpha_3)
+                    return html.Span("Data up to date", style={"color": "darkgreen"}), False
+                except:
+                    return html.Span("Update error", style={"color": "darkred"}), False
+            case _:
+                return html.Span("Invalid title page", style={"color": "darkred"}), False
 
 
 @app.callback(
@@ -803,10 +869,14 @@ def update_country_average(selected_category, indicator_code, selected_year, sel
         fig.add_annotation(text="Aucune donnée pour les pays sélectionnés",
                            xref="paper", yref="paper", showarrow=False)
     else:
+        country_to_color = {country["name"]: af.color_palette[i] for i, country in enumerate(selected_countries_list)}
         # Créer un diagramme en barres verticales
         fig = px.bar(df_avg, x="Country", y="Average",
-                     title=f"Average per country ({selected_year[1]})",
-                     labels={"Average": "Average value"})
+                     title=f"Estimation per country in {selected_year[1]}",
+                     labels={"Average": "Average value"},
+                     color="Country",
+                     color_discrete_map=country_to_color,
+                     color_discrete_sequence=px.colors.qualitative.G10,)
         fig.update_layout(title_x=0.5)
 
     return dcc.Graph(
