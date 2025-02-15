@@ -59,3 +59,6 @@ python app.py
 
 ### 🌐 Dash Application
 The dashboard is deployed on **Render**, utilizing PostgreSQL for secure data storage.
+<p align="center">
+    <img width="362" alt="webscraping" src="https://github.com/user-attachments/assets/fe6677bf-56d4-4b6d-87fd-e9002738e788" />
+</p>
