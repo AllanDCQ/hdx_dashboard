@@ -13,7 +13,7 @@ Access the interactive dashboard via the link: [HealthScope Dashboard](https://h
 
 ## 🧩 Project Overview
 
-The **HealthScope Dashboard** extracts and visualizes **public health data** from the [Humanitarian Data Exchange (HDX)](https://data.humdata.org/). It allows users to **track health trends**, identify **high-risk areas**, and analyze the impact of interventions in real time.
+The **HDX Humanitarian Health Dashboard** extracts and visualizes **public health data** from the [Humanitarian Data Exchange (HDX)](https://data.humdata.org/). It allows users to **track health trends**, identify **high-risk areas**, and analyze the impact of interventions in real time.
 
 ### 🔑 Key Features:
 
