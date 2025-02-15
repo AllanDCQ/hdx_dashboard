@@ -1,6 +1,6 @@
-# 📊 HealthScope Dashboard
+# 📊 HDX Humanitarian Health Dashboard
 
-Welcome to the **HealthScope Dashboard** GitHub repository. This project is designed to provide an **interactive and educational visualization of health data**. It enables researchers, analysts, and decision-makers to easily access public health information through interactive charts and detailed analysis.
+Welcome to the **HDX Humanitarian Health Dashboard** GitHub repository. This project is designed to provide an **interactive and educational visualization of health data**. It enables researchers, analysts, and decision-makers to easily access public health information through interactive charts and detailed analysis.
 
 ## 🌍  Live Application
 
