@@ -6,6 +6,8 @@ import plotly.graph_objects as go
 from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
 
+from src.app_function import color_palette
+
 
 #################################################### Coverage Status Page ################################################
 
@@ -52,12 +54,12 @@ def generate_coverage_status_page(selected_countries_list, selected_year):
                 )
             ]
         )
-    ], style={'width': '40%', 'height': '40%'})
+    ], style={'width': '40%', 'height': '35%'})
 
     # Conteneur pour le graphique linéaire (mise à jour via callback)
     linear_graph_container = html.Div(
         id='indicator-graph-container',
-        style={'width': '60%', 'height': '40%'}
+        style={'width': '60%', 'height': '35%'}
     )
 
     # Première rangée : carte et graphique linéaire côte à côte
@@ -70,8 +72,8 @@ def generate_coverage_status_page(selected_countries_list, selected_year):
     top5_chart_container = html.Div(
         id='top5-bar-chart-container',
         style={
-            'width': '33%',
-            'height': '40%',
+            'width': '33.33%',
+            'height': '35%',
             'padding': '5px',
         }
     )
@@ -80,8 +82,8 @@ def generate_coverage_status_page(selected_countries_list, selected_year):
     selected_country_average_container = html.Div(
         id="selected-country-average-container",
         style={
-            'width': '33%',
-            'height': '40%',
+            'width': '33.33%',
+            'height': '35%',
             'padding': '5px',
             'textAlign': 'center',
             'lineHeight': '30vh',
@@ -92,10 +94,9 @@ def generate_coverage_status_page(selected_countries_list, selected_year):
     global_average_container = html.Div(
         id="global-average-container",
         style={
-            'width': '33%',
-            'height': '40%',
+            'width': '33.33%',
+            'height': '35%',
             'textAlign': 'center',
-            'lineHeight': '30vh'
         }
     )
 
@@ -136,7 +137,7 @@ def generate_coverage_status_page(selected_countries_list, selected_year):
             'color': '#7F8C8D',
             'fontSize': '18px',
             'fontStyle': 'italic',
-            'marginBottom': '30px'
+            'marginBottom': '10px'
         }
     )
 
@@ -168,7 +169,7 @@ def get_indicator_data(selected_countries_list, selected_year, indicator_code):
             and_(
                 indicator_table.columns.id_indicator == indicator_code,
                 indicator_table.columns.id_country.in_(country_codes),
-                indicator_table.columns.year_recorded.between(2000, selected_year)
+                indicator_table.columns.year_recorded.between(selected_year[0], selected_year[1])
             )
         )
 
@@ -191,12 +192,15 @@ def update_indicator_graph(selected_countries_list, selected_year, indicator_cod
 
         # Création du graphique avec Plotly
         else:
+            country_to_color = {country["name"]: color_palette[i] for i, country in enumerate(selected_countries_list)}
             fig = px.line(
                 data_frame= df,
                 x="year_recorded",
                 y="value",
                 color="id_country",
-                title=f"{indicator_title} in {selected_year}"
+                color_discrete_map=country_to_color,
+                color_discrete_sequence=px.colors.qualitative.G10,
+                title=f"{indicator_title} in {selected_year[1]}"
             )
     else:
         # Message si aucun pays n'est sélectionné

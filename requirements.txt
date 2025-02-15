@@ -10,3 +10,4 @@ flask-caching~=2.3.0
 beautifulsoup4~=4.13.3
 sqlalchemy~=2.0.38
 psycopg2~=2.9.9
+dash_breakpoints~=0.1.0

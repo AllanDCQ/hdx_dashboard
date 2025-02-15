@@ -2,10 +2,14 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go 
+import plotly.graph_objects as go
 import os
 
 from sqlalchemy import select, create_engine, MetaData, Table, and_
+from dash import dcc, html
+
+color_palette = px.colors.qualitative.Plotly
+os.environ["DATABASE_URL"] = "postgresql://webscraping_db_user:35RuggWvxnsRNbARA2QmiBqOpo0rVo83@dpg-cughkud6l47c73be2j10-a.frankfurt-postgres.render.com:5432/webscraping_db"
 
 
 def generate_country_menu(country_data):
@@ -49,7 +53,6 @@ def generate_country_menu(country_data):
     return menu_items
 
 
-
 def get_country_name_by_alpha3(alpha3, country_data):
     """
     Retrieve the country name based on the alpha3 code from the country data.
@@ -67,8 +70,10 @@ def get_country_name_by_alpha3(alpha3, country_data):
                  if isinstance(country, dict) and country["alpha3"] == alpha3), None)
 
 
-def generate_health_status_page(selected_countries_list):
 
+
+
+def generate_coverage_status_page(selected_countries_list):
     map = html.Div([
         dcc.Loading(
             id="loading-indicator",  # ID pour l'indicateur de chargement
@@ -84,60 +89,7 @@ def generate_health_status_page(selected_countries_list):
         )
     ], style={'width': '60%', 'height': '40vh'})
 
-    something = html.Div([html.H4("Health status : Under Construction")], style={'width': '40%', 'height': '80vh'})
-
-    row_1 = html.Div([
-        map,
-        something,
-    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
-
-    return row_1
-
-def generate_factors_risk_status_page(selected_countries_list):
-
-    map = html.Div([
-        dcc.Loading(
-            id="loading-indicator",  # ID pour l'indicateur de chargement
-            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
-            children=[
-                dcc.Graph(
-                    id="world-map",
-                    config={'scrollZoom': True, 'displayModeBar': False},
-                    figure={},  # This initializes the map when the app loads
-                    selectedData=None  # We use this property to capture selected country data
-                )
-            ]
-        )
-    ], style={'width': '60%', 'height': '40vh'})
-
-    something = html.Div([html.H4("Health status : Under Construction")], style={'width': '40%', 'height': '80vh'})
-
-    row_1 = html.Div([
-        map,
-        something,
-    ], style={'display': 'flex', 'flexDirection': 'row', 'padding': '5px','width': '100%'}),
-
-    return row_1
-
-
-
-def generate_health_systems_page(selected_countries_list):
-    map = html.Div([
-        dcc.Loading(
-            id="loading-indicator",  # ID pour l'indicateur de chargement
-            type="circle",  # Type de l'indicateur : 'circle', 'dot', 'default'
-            children=[
-                dcc.Graph(
-                    id="world-map",
-                    config={'scrollZoom': True, 'displayModeBar': False},
-                    figure={},  # This initializes the map when the app loads
-                    selectedData=None  # We use this property to capture selected country data
-                )
-            ]
-        )
-    ], style={'width': '60%', 'height': '40vh'})
-
-    something = html.Div([html.H4("Health systems : Under Construction")], style={'width': '40%', 'height': '80vh'})
+    something = html.Div([html.H4("Risk Factor : Under Construction")], style={'width': '40%', 'height': '80vh'})
 
     row_1 = html.Div([
         map,
@@ -146,6 +98,14 @@ def generate_health_systems_page(selected_countries_list):
 
 
     return row_1
+
+
+
+
+
+
+
+
 
 
 

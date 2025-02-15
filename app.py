@@ -1,22 +1,28 @@
 import json
 import os
+from types import NoneType
 
 from flask import Flask
 from flask_caching import Cache
 
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
-import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dc
 import numpy as np
 
-import app_function as af
+from src import app_function as af
+from src.app_risks import generate_factors_risk_status_page
+from src.app_status import generate_health_status_page
+from src.app_systems import generate_health_systems_page, get_health_systems_data_uhc
 
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 
 from src.app_coverage import generate_coverage_status_page, update_indicator_graph, get_indicator_data
+
+from dash_breakpoints import WindowBreakpoints
 
 
 # ------------------------------------------------- Initialize Dash App ------------------------------------------------
@@ -26,16 +32,22 @@ server = Flask(__name__)
 
 # Initialise Dash app with Bootstrap CSS and suppress callback exceptions
 app = dash.Dash(__name__,
+                title="HealthScope Info",
+                update_title="Loading...",
                 server=server,
-                external_stylesheets=[dbc.themes.BOOTSTRAP],
+                external_stylesheets=[dc.themes.BOOTSTRAP],
                 suppress_callback_exceptions=True)
 
 # Initialise list to store selected countries {"alpha3": selected_alpha3, "name": selected_country_name}
-selected_countries_list = []
+selected_countries_list = [
+    {"alpha3": "SOM", "name": "Somalia"},
+    {"alpha3": "KEN", "name": "Kenya"},
+    {"alpha3": "UGA", "name": "Uganda"},
+    {"alpha3": "TZA", "name": "Tanzania"}]
 selected_geojson_data = {}
 
 # Initialise delfault year selected
-selected_year = 2008
+selected_year = [2015,2022]
 
 # Initial default title page
 title_page = "Health Status Indicators"
@@ -63,14 +75,14 @@ classButton = "btn btn-primary btn-sm mx-1"
 # --------------------------------------------------- Initialize Data --------------------------------------------------
 
 # Load country data from JSON file of countries
-file_path = "countries.json"
+file_path = "assets/countries.json"
 with open(file_path, "r") as file:
     country_data = json.load(file)
 
 
 @cache.memoize(timeout=86400)  # Cache for 1 day
 def get_geo_df():
-    file_path = "filtered_world.geojson"
+    file_path = "assets/filtered_world.geojson"
     with open(file_path, "r") as file:
         geojson_data = json.load(file)
 
@@ -85,87 +97,36 @@ geojson_data, geo_df = get_geo_df()  # Load once, then reuse
 
 
 
-
 # --------------------------------------------------- App Layout -------------------------------------------------------
-app.layout = html.Div([
 
+app.layout = html.Div([
     # =============================================== Top Navigation Bar ===============================================
     html.Div([
-        html.Div([
+        # Project Logo
+        html.A(href="https://hdx-dashboard.onrender.com/", target="_blank", children=html.Img(src="/assets/logo.png", style={'height': '5vh'})),
+        # University Logo
+        html.A(href="https://www.univ-lille.fr/", target="_blank", children=html.Img(src="/assets/lille.png", style={'height': '4vh', 'paddingLeft': '1vw', 'paddingRight': '5vw'})),
 
-            # Project Logo
-            html.Img(src="/assets/logo.png", style={'height': '5vh', 'paddingRight': '1vw'}),
-            # University Logo
-            html.Img(src="/assets/lille.png", style={'height': '4vh', 'paddingLeft': '1vw', 'paddingRight': '5vw'}),
-
-            # ****************************** Navigation Buttons ******************************
-            html.Div([
-                html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton),
-                html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
-                html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton),
-                html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton),
-            ], style={'paddingRight': '5vw','width': '50%'}),
-            # ********************************************************************************
-
-
-            # ******************************* Date Picker ************************************
-            html.Div([
-                # Dynamic Date Text using the callback function update_date()
-                html.H3(id="date-display", style={'fontSize': '1.25rem', 'fontWeight': 'bold'}),
-
-                # Date Slider
-                html.Div([
-                    dcc.Slider(min=2000,max=2025,step=1,
-                        marks={2000: '2000', 2025: '2025'},
-                        value=selected_year,
-                        tooltip={"placement": "bottom", "always_visible": True},
-                        id="date-slider",
-                    )
-                ], style={'padding': '3px', 'flex': '1'})
-
-            ], style={'display': 'flex', 'flexDirection': 'row','width': '20%'}),
-
-            # Alert for maximum countries using the callback function update_page_and_countries()
-            html.Div(id="maximum-alert", style={'padding': '10px'}),
-            # ********************************************************************************
-
-
-            # ******************************** Country Picker ********************************
-            html.Div([
-                # Dropdown Menu for selecting countries using the callback function update_page_and_countries()
-                html.Div([
-                    dbc.DropdownMenu(
-                        label="Select Countries",
-                        # Generate the country menu using the function generate_country_menu() in app_function.py
-                        children= af.generate_country_menu(country_data),
-                        direction="down",
-                        toggle_style={"width": "200px"},
-                        id="country-dropdown"
-                    ),
-                ], style={'padding': '5px', 'flex': '1', 'marginRight': 'auto'}),
-
-                # Button to remove selected countries using the callback function update_page_and_countries()
-                html.Button("Remove Selected Countries",
-                            id="remove-countries-btn",
-                            n_clicks=0,
-                            className="btn btn-danger btn-sm mx-1"),
-            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '20%'}),
-            # ********************************************************************************
-
-
-        ], style={'display': 'flex', 'alignItems': 'center', 'padding': '10px', 'backgroundColor': '#f4f4f4', 'width': '100%'})
-    ], style={'display': 'flex', 'flexDirection': 'row'}),
+        html.Div(id="navbar-content", style={"width" : "90%"}),
+        dcc.Store(id="window-width-provider"),
+        dcc.Store(id='date-store', data=[2000,2025]),  # Example selected year data
+        WindowBreakpoints(
+            id="breakpoints",
+            widthBreakpointThresholdsPx=[800, 1200],
+            widthBreakpointNames=["sm", "md", "lg"],
+        ),
+    ], className="responsive-navbar"),
     # ==================================================================================================================
 
 
     # ----------------------------------------------- Section Dashboard ------------------------------------------------
 
-    html.Div(id="page-content", style={'padding': '20px'}),
+    html.Div(id="page-content"),
 
     html.Div([
         dcc.Loading(
             id="loading-indicator2",
-            type="default", # choose from 'circle', 'dot', 'default'
+            type="default",
             children=html.Div(id="status-page")
         ),
         dcc.Store(id='intermediate-value'),
@@ -176,11 +137,172 @@ app.layout = html.Div([
 
 
 
+@app.callback(
+    Output("window-width-provider", "data"),
+    Input("breakpoints", "widthBreakpoint"),
+    State("breakpoints", "width"),
+)
+def breakpoint_width(breakpoint_name: str, window_width: int):
+    """
+    Update the window width based on the current breakpoint.
+
+    This callback function updates the window width based on the current breakpoint name and window width.
+
+    :param breakpoint_name: The name of the current breakpoint (e.g., 'sm', 'md', 'lg').
+    :type breakpoint_name: str
+    :param window_width: The current width of the window.
+    :type window_width: int
+    :return: The current window width.
+    :rtype: int
+    """
+    return window_width
 
 
+def list_button_nav():
+    return [
+        html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton),
+        html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton),
+        html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton),
+        html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton),
+    ]
+
+def slider_date():
+    return dcc.RangeSlider(min=2000,max=2025,step=1,
+                            marks={2000: '2000', 2025: '2025'},
+                            value=selected_year,
+                            tooltip={"placement": "top", "always_visible": False},
+                            id="date-slider",
+                            )
+
+def dropdown_country():
+    return dc.DropdownMenu(
+        label="Select Countries",
+        # Generate the country menu using the function generate_country_menu() in app_function.py
+        children= af.generate_country_menu(country_data),
+        direction="down",
+        toggle_style={"width": "200px"},
+        id="country-dropdown"
+    )
+
+def button_remove():
+    return html.Button("Remove Selected Countries",
+                       id="remove-countries-btn",
+                       n_clicks=0,
+                       className="btn btn-danger btn-sm mx-1")
+@app.callback(
+    Output("navbar-content", "children"),
+    Input("window-width-provider", "data")
+)
+def adjust_navbar_based_on_width(width):
+    """
+    Adjust the navigation bar content based on the window width.
+
+    :param width: The current width of the window.
+    :type width: int
+    :return: The updated navigation bar content.
+    :rtype: dash.development.base_component.Component
+    """
+    if width > 1000:
+        return html.Div([
+            # ****************************** Navigation Buttons ******************************
+            html.Div(children=list_button_nav(), style={'paddingRight': '5vw','width': '50%'}),
+            # ********************************************************************************
+
+            # ******************************* Date Picker ************************************
+            html.Div([
+                # Dynamic Date Text using the callback function update_date()
+                html.H3(id="date-display", style={'fontSize': '1.25rem', 'fontWeight': 'bold'}),
+                # Date Slider
+                html.Div(children=[slider_date()], style={'padding': '3px', 'flex': '1'})
+            ], style={'display': 'flex', 'flexDirection': 'row','width': '25%'}),
+
+            # Alert for maximum countries using the callback function update_page_and_countries()
+            html.Div(id="maximum-alert", style={'padding': '10px'}),
+            # ********************************************************************************
+
+
+            # ******************************** Country Picker ********************************
+            html.Div([
+                # Dropdown Menu for selecting countries using the callback function update_page_and_countries()
+                html.Div([dc.DropdownMenu(
+                    label="Select Countries",
+                    # Generate the country menu using the function generate_country_menu() in app_function.py
+                    children= af.generate_country_menu(country_data),
+                    direction="down",
+                    toggle_style={"width": "200px"},
+                    id="country-dropdown"
+                )], style={'padding': '5px', 'flex': '1', 'marginRight': 'auto'}),
+                # Button to remove selected countries using the callback function update_page_and_countries()
+                button_remove()
+            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '25%'}),
+            # ********************************************************************************
+
+        ],style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'})
+    else:
+        return html.Div([
+            # The button to open the menu
+            dc.Button("Open Menu", id="open-menu-btn", color="primary", style={"width": "100%"}),
+
+            # Modal that will act as the sliding menu
+            dc.Modal(
+                [
+                    dc.ModalHeader(
+                        dc.Button("Close", id="close-menu-btn", color="secondary", className="ml-auto")
+                    ),
+                    dc.ModalBody(
+                        [
+                            # ****************************** Navigation Buttons ******************************
+                            html.H3("Navigation Buttons"),
+                            html.Div(children=[
+                                html.Button("Health Status", id="health-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                                html.Button("Risk Factors", id="risk-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                                html.Button("Service Coverage", id="service-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                                html.Button("Health Systems", id="healthsys-btn", n_clicks=0, className=classButton, style={'marginBottom': '10px'}),
+                            ], style={'paddingRight': '5vw', 'width': '100%', 'marginTop': '10px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center'}),
+                            # ********************************************************************************
+
+                            # ******************************* Date Picker ************************************
+                            html.Div([
+                                html.H3(id="date-display", style={'fontSize': '1rem', 'fontWeight': 'bold'}),
+                                html.Div(children=[slider_date()], style={'padding': '3px', 'flex': '1'})
+                            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'}),
+
+                            html.Div(id="maximum-alert", style={'padding': '10px'}),
+                            # ********************************************************************************
+
+                            # ******************************** Country Picker ********************************
+                            html.Div([
+                                # Dropdown Menu for selecting countries using the callback function update_page_and_countries()
+                                html.Div([dropdown_country()], style={'padding': '5px', 'flex': '1', 'marginRight': 'auto'}),
+                                # Button to remove selected countries using the callback function update_page_and_countries()
+                                button_remove()
+                            ], style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'}),
+                            # ********************************************************************************
+                        ]
+                    ),
+                ],
+                id="menu-modal",
+                is_open=False,  # Initially closed
+                size="lg",  # You can set it to large or full screen
+                style={"padding": "0", "maxWidth": "100%", "width": "100%", "height": "100%", "backgroundColor": "#f4f4f4"}
+            ),
+        ])
+
+
+# Callbacks for opening and closing the menu
+@app.callback(
+    Output("menu-modal", "is_open"),
+    [Input("open-menu-btn", "n_clicks"), Input("close-menu-btn", "n_clicks")],
+    [State("menu-modal", "is_open")]
+)
+def toggle_menu(open_clicks, close_clicks, is_open):
+    if open_clicks or close_clicks:
+        return not is_open
+    return is_open
 
 @app.callback(
     Output("date-display", "children"),
+    Output("date-store", "data"),
     Input("date-slider", "value")
 )
 def update_date(new_selected_year):
@@ -192,7 +314,7 @@ def update_date(new_selected_year):
         - Input: id = **date-slider** Receives the selected year from the `date-slider`.
 
     :param new_selected_year: The year selected from the date slider.
-    :type new_selected_year: int
+    :type new_selected_year: list[int,int]
 
     :return: The selected year as a string.
     :rtype: str
@@ -201,11 +323,11 @@ def update_date(new_selected_year):
 
     selected_year = new_selected_year
 
-    return f"{selected_year}"
+    return f"{selected_year[0]} - {selected_year[1]}", selected_year
 
 
 @app.callback(
-    Output("page-content", "children"),  # Update the title dynamically
+    Output("page-content", "children"),
         Output("maximum-alert", "children"),
         Output("status-page", "children"),
         Output("intermediate-value", "data"),
@@ -215,6 +337,7 @@ def update_date(new_selected_year):
         Input("service-btn", "n_clicks"),
         Input("healthsys-btn", "n_clicks"),
         Input("remove-countries-btn", "n_clicks"),
+        Input("date-store", "data")
     ] + [
         Input(country["alpha3"], "n_clicks")
         for region in country_data["regions"]
@@ -247,14 +370,16 @@ def update_page_and_countries(*args):
     global title_page
     global selected_countries_list
 
+    if not isinstance(selected_countries_list, list):
+        selected_countries_list = []
+
     # Initialize alert message to an empty string
     alert = ""
 
-    # If a trigger source is detected
-    if ctx.triggered:
-        # Get the ID of the trigger source
-        triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
+    # If a trigger source is detected
+    if triggered_id != "date-store":
         # Check the trigger source
         match triggered_id:
             case "health-btn": # If the trigger source is the Health Status button
@@ -285,7 +410,7 @@ def update_page_and_countries(*args):
                     # Check if the maximum number of countries is selected
                     if len(selected_countries_list) >= 4:
                         # If the maximum number of countries is selected, display an alert message
-                        alert = dbc.Alert(
+                        alert = dc.Alert(
                             [
                                 html.I(className="bi bi-exclamation-triangle-fill me-2"),  # Bootstrap warning icon
                                 "Maximum of 4 countries can be selected"
@@ -313,26 +438,20 @@ def update_page_and_countries(*args):
                 else:
                     # Remove country if already selected by filtering the list without the selected country
                     selected_countries_list[:] = [c for c in selected_countries_list if c["alpha3"] != selected_alpha3]
-    
 
     # Generate country text
-    countries = ", ".join([c["name"] for c in selected_countries_list]) if selected_countries_list else "No countries selected"
+    if selected_countries_list == None or selected_countries_list == {NoneType}:
+        countries = "No countries selected"
+    else :
+        countries = ", ".join([c["name"] for c in selected_countries_list])
 
-    # Bannière bleue pour la sélection des pays (j'ai fait uniquement pour ma partie)
-    if title_page == "Service Coverage Indicators":
-        return (
-            html.Div(),  
-            alert,
-            display_status_page(),
-            selected_countries_list
-        )
-    else:
-        return (
-            html.H4(f"{title_page} : {countries}") if countries else html.Div(),
-            alert,
-            display_status_page(),
-            selected_countries_list
-        )
+    return (
+        html.H4(f"{title_page} : {countries}"),
+        alert,
+        display_status_page(),
+        selected_countries_list
+    )
+
 
 @app.callback(
     Output("world-map", "figure"),
@@ -355,13 +474,18 @@ def update_map(*args):
     :rtype: plotly.graph_objects.Figure
     """
 
+    if title_page == "Health Systems":
+        return update_map_health_systems()
+
     global selected_countries_list
     global selected_geojson_data
 
     fig = go.Figure()
     locations = []
     z = []
+    colors = []
     hovertext = None
+    colorscale = [[0, "lightgray"], [1, "lightgray"]]  # Default color scale
 
     if selected_countries_list:
         selected_df = pd.DataFrame(selected_countries_list)
@@ -380,10 +504,16 @@ def update_map(*args):
         # Update geo_df for selection status
         geo_df["selected"] = np.where(geo_df["CODE"].isin(selected_df["alpha3"]), 1, 0)
 
+        color_palette = px.colors.qualitative.Plotly
+        num_colors = len(selected_countries_list)
+        country_z_values = {selected_countries_list[i]["alpha3"]: i for i in range(num_colors)}
+
         map = selected_geojson_data
         locations = geo_df["CODE"]
-        z = geo_df["selected"]
+        z = [country_z_values[code] if code in country_z_values else None for code in locations]
         hovertext = geo_df["NAME"]
+
+        colorscale = [[i / max(1, num_colors - 1), color_palette[i % len(color_palette)]] for i in range(num_colors)]
     else:
         map = geojson_data
 
@@ -393,7 +523,7 @@ def update_map(*args):
         geojson=map,  # Use the filtered GeoJSON
         locations=locations,
         z=z,
-        colorscale=["lightgray", "lightgray"],  # Light gray for non-selected, red for selected
+        colorscale=colorscale,
         marker=dict(opacity=0.6, line=dict(color='red', width=2)),
         showscale=False,  # Hide the color scale
         featureidkey="properties.CODE",
@@ -416,6 +546,41 @@ def update_map(*args):
     return fig
 
 
+def update_map_health_systems() :
+
+    map_uhc = get_health_systems_data_uhc(selected_countries_list, selected_year)
+
+    min_value = map_uhc['value'].min()
+    max_value = map_uhc['value'].max()
+
+    fig_map = px.choropleth(
+        data_frame=map_uhc,
+        locations=map_uhc['id_country'],
+        color=map_uhc['value'],
+        hover_name=map_uhc['id_country'],
+        title=f"UHC Service Coverage Index ({selected_year[0]} - {selected_year[1]})",
+        color_continuous_scale='Blues',
+        range_color=[min_value, max_value],
+        hover_data={'value': True}
+    )
+
+    fig_map.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>UHC Index: %{z}<extra></extra>",
+        hovertext=map_uhc['id_country']
+    )
+
+    fig_map.update_layout(
+        coloraxis_showscale=True,
+        coloraxis_colorbar={
+            "title": "UHC Index",
+            "tickvals": [min_value, (min_value + max_value) / 2, max_value],
+            "ticktext": [f"{min_value:.0f}", f"{(min_value + max_value) / 2:.0f}", f"{max_value:.0f}"]
+        },
+        margin={"r": 0, "t": 50, "l": 0, "b": 0}
+    )
+
+    return fig_map
+
 def display_status_page():
     """
     Display the status page based on the selected title.
@@ -429,15 +594,16 @@ def display_status_page():
 
     match title_page:
         case "Health Status Indicators":
-            return af.generate_health_status_page(selected_countries_list)
+            return generate_health_status_page(selected_countries_list,selected_year)
+
         case "Risk Factors Indicators":
-            return af.generate_factors_risk_status_page(selected_countries_list)
+            return generate_factors_risk_status_page(selected_countries_list, selected_year)
 
         case "Service Coverage Indicators":
             return generate_coverage_status_page(selected_countries_list, selected_year)
 
         case "Health Systems":
-            return af.generate_health_systems_page(selected_countries_list)
+            return generate_health_systems_page(selected_countries_list,selected_year)
 
         case _:
             return None
@@ -462,10 +628,6 @@ def display_status_page():
 )
 def update_indicator(selected_category, indicator_code, selected_year, selected_countries_list):
     try:
-        print("Catégorie :", selected_category)
-        print("Code indicateur :", indicator_code)
-        print("Année sélectionnée :", selected_year)
-        print("Pays sélectionnés :", selected_countries_list)
         indicator_titles = {
             'HIV_0000000001': "Estimated number of people living with HIV",
             'MALARIA_EST_INCIDENCE': "Estimated malaria incidence (per 1000 population at risk)",
@@ -516,7 +678,6 @@ def update_indicator_options(selected_category):
     Input("intermediate-value", "data")  # Récupère la liste des pays sélectionnés
 )
 def update_banner_text(selected_countries):
-    print("📌 Mise à jour bannière - Pays sélectionnés :", selected_countries)
     if selected_countries:
         countries_text = ", ".join([c["name"] for c in selected_countries])  # Liste des pays sélectionnés
         return f"🩺 SERVICE COVERAGE INDICATORS : {countries_text}"  # Affiche les pays sélectionnés
@@ -535,11 +696,6 @@ def update_banner_text(selected_countries):
     ]
 )
 def update_top5_bar_chart(selected_category, indicator_code, selected_year):
-    print("Dans update_top5_bar_chart:")
-    print(" - Catégorie :", selected_category)
-    print(" - Code indicateur :", indicator_code)
-    print(" - Année :", selected_year)
-
     # Extraire la liste de tous les pays à partir de country_data
     all_countries = []
     for region in country_data["regions"]:
@@ -547,7 +703,6 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
             for country in country_data["regions"][region][subregion]:
                 if isinstance(country, dict):
                     all_countries.append(country)
-    print("Tous les pays :", [c["name"] for c in all_countries])
 
     if indicator_code is not None:
         # Récupérer les données pour TOUS les pays
@@ -558,7 +713,7 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
                                xref="paper", yref="paper", showarrow=False)
         else:
             # Filtrer pour l'année sélectionnée
-            df_year = df[df["year_recorded"] == selected_year]
+            df_year = df[df["year_recorded"] == selected_year[1]]
             if df_year.empty:
                 fig = go.Figure()
                 fig.add_annotation(text="Aucune donnée pour l'année sélectionnée",
@@ -571,17 +726,17 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
             df_top5 = df_year.sort_values(by="value", ascending=False).head(5)
             # Construction du titre personnalisé
             if indicator_code == 'HIV_0000000001':
-                title_text = f"Top 5 countries with the highest estimated number of people <br>(all ages combined) living with HIV <br> from 2000 to {selected_year} overall"
+                title_text = f"Top 5 countries with the highest estimated number of people <br>(all ages combined) living with HIV <br> from {selected_year[0]} to {selected_year[1]} overall"
             elif indicator_code == 'MALARIA_EST_INCIDENCE':
-                title_text = f"Top 5 countries with the highest estimated incidence of malaria <br>(per 1000 people at risk) <br> from 2000 to {selected_year} overall"
+                title_text = f"Top 5 countries with the highest estimated incidence of malaria <br>(per 1000 people at risk) <br> from {selected_year[0]} to {selected_year[1]} overall"
             elif indicator_code == 'MDG_0000000020':
-                title_text = f"Top 5 countries with the highest incidence of tuberculosis <br>(per 100,000 inhabitants per year) <br> from 2000 to {selected_year} overall"
+                title_text = f"Top 5 countries with the highest incidence of tuberculosis <br>(per 100,000 inhabitants per year) <br> from {selected_year[0]} to {selected_year[1]} overall"
             elif indicator_code == 'WHS3_62':
-                title_text = f"Top 5 countries with the highest number <br>of reported cases of measles from 2000 to {selected_year} overall"
+                title_text = f"Top 5 countries with the highest number <br>of reported cases of measles from {selected_year[0]} to {selected_year[1]} overall"
             elif indicator_code == 'WHS3_41':
-                title_text = f"Top 5 countries with the highest number <br>of reported cases of diphteria from 2000 to {selected_year} overall"
+                title_text = f"Top 5 countries with the highest number <br>of reported cases of diphteria from {selected_year[0]} to {selected_year[1]} overall"
             elif indicator_code == 'WHS3_57':
-                title_text = f"Top 5 countries with the highest number <br>of reported cases of rubella from 2000 to {selected_year} overall"
+                title_text = f"Top 5 countries with the highest number <br>of reported cases of rubella from {selected_year[0]} to {selected_year[1]} overall"
             elif selected_category == 'disease':
                 title_text = f"Top 5 countries most affected by the {indicator_code}"
             elif selected_category == 'vaccine':
@@ -621,10 +776,6 @@ def update_top5_bar_chart(selected_category, indicator_code, selected_year):
     ]
 )
 def update_country_average(selected_category, indicator_code, selected_year, selected_countries_list):
-    print("Dans update_country_average:")
-    print(" - Indicateur :", indicator_code)
-    print(" - Année :", selected_year)
-    print(" - Pays sélectionnés :", selected_countries_list)
 
     # Si aucun pays n'est sélectionné, afficher un message
     if not selected_countries_list:
@@ -636,7 +787,7 @@ def update_country_average(selected_category, indicator_code, selected_year, sel
         # On appelle get_indicator_data pour un seul pays dans une liste
         df = get_indicator_data([country], selected_year, indicator_code)
         # Filtrer les données pour l'année exacte
-        df_year = df[df["year_recorded"] == selected_year]
+        df_year = df[df["year_recorded"] == selected_year[1]]
         if not df_year.empty:
             avg_value = df_year["value"].mean()
         else:
@@ -654,14 +805,13 @@ def update_country_average(selected_category, indicator_code, selected_year, sel
     else:
         # Créer un diagramme en barres verticales
         fig = px.bar(df_avg, x="Country", y="Average",
-                     title=f"Average per country ({selected_year})",
+                     title=f"Average per country ({selected_year[1]})",
                      labels={"Average": "Average value"})
         fig.update_layout(title_x=0.5)
 
     return dcc.Graph(
         figure=fig,
-        config={'displayModeBar': False},
-        style={'width':'80%', 'height':'600'}
+        config={'displayModeBar': False}
     )
 
 #---------------------------------------------------- Graphique moyenne mondiale ---------------------------------------------------#
@@ -676,10 +826,6 @@ def update_country_average(selected_category, indicator_code, selected_year, sel
     ]
 )
 def update_global_average(selected_category, indicator_code, selected_year):
-    print("Dans update_global_average:")
-    print(" - Catégorie :", selected_category)
-    print(" - Indicateur :", indicator_code)
-    print(" - Année :", selected_year)
 
     # Construire la liste de tous les pays à partir de country_data
     all_countries = []
@@ -688,13 +834,12 @@ def update_global_average(selected_category, indicator_code, selected_year):
             for country in country_data["regions"][region][subregion]:
                 if isinstance(country, dict):
                     all_countries.append(country)
-    print("Total number of countries :", len(all_countries))
 
     # Vérifier qu'un indicateur est sélectionné
     if indicator_code is not None:
         df = get_indicator_data(all_countries, selected_year, indicator_code)
         # Filtrer pour l'année sélectionnée
-        df_year = df[df["year_recorded"] == selected_year]
+        df_year = df[df["year_recorded"] == selected_year[1]]
         if df_year.empty:
             return html.Div("No data for the year selected", style={'textAlign': 'center'})
         else:
@@ -714,14 +859,13 @@ def update_global_average(selected_category, indicator_code, selected_year):
                 mode="number",
                 value=global_avg,
                 title={
-                    "text": f"World average ({selected_year})<br><span style='font-size:16px;color:gray; white-space: normal;'>{desc}</span>"
+                    "text": f"World average ({selected_year[1]})<br><span style='font-size:16px;color:gray; white-space: normal;'>{desc}</span>"
                 }
             ))
             fig.update_layout(font=dict(size=24), margin={"l": 20, "r": 20, "t": 40, "b": 20})
             return dcc.Graph(
                 figure=fig,
                 config={'displayModeBar': False},
-                style={'width': '100%', 'height': '600px'}
             )
     else:
         return html.Div("Select an indicator", style={'textAlign': 'center'})
@@ -735,5 +879,6 @@ def update_global_average(selected_category, indicator_code, selected_year):
 port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
 if __name__ == "__main__":
+    #app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)
     app.run_server(debug=True)
 
