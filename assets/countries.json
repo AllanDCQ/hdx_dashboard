@@ -52,7 +52,7 @@
         { "name": "Benin", "alpha3": "BEN" },
         { "name": "Burkina Faso", "alpha3": "BFA" },
         { "name": "Cabo Verde", "alpha3": "CPV" },
-        { "name": "Cote d'ivoire", "alpha3": "CIV" },
+        { "name": "Cote d ivoire", "alpha3": "CIV" },
         { "name": "Gambia, The", "alpha3": "GMB" },
         { "name": "Ghana", "alpha3": "GHA" },
         { "name": "Guinea", "alpha3": "GIN" },
@@ -139,7 +139,7 @@
         { "name": "China", "alpha3": "CHN" },
         { "name": "Hong Kong SAR, China", "alpha3": "HKG" },
         { "name": "Macao SAR, China", "alpha3": "MAC" },
-        { "name": "Korea, Dem People's Rep", "alpha3": "PRK" },
+        { "name": "Korea, Dem People s Rep", "alpha3": "PRK" },
         { "name": "Japan", "alpha3": "JPN" },
         { "name": "Mongolia", "alpha3": "MNG" },
         { "name": "Korea, Rep", "alpha3": "KOR" }

@@ -63,15 +63,26 @@
 
 
 /* --------------------------------------------------- Page Systems ------------------------------------------------- */
-.responsive-row-map_systems {
-    width: 100%;
-    height: 50%;
-}
 
 .responsive-row-1_systems {
     display: flex;
+    flex-direction: row;
     width: 100%;
-    height: 50%;
+    height: 60%;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.responsive-items_systems {
+    width: 50%;
+}
+
+.responsive-row-2_systems {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 40%;
     align-items: center;
     justify-content: center;
 }
@@ -116,12 +127,14 @@
 
     .responsive-row_coverage,
     .responsive-row-1_systems,
+    .responsive-row-2_systems,
     .responsive-row_risk,
     .responsive-container {
         flex-direction: column;
         height: auto;
     }
 
+    .responsive-items_systems,
     .responsive-item-2_coverage,
     .responsive-map_coverage,
     .responsive-item-1_coverage,

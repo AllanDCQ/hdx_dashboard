@@ -616,34 +616,71 @@ def update_map_health_systems() :
 
     map_uhc = get_health_systems_data_uhc(selected_countries_list, selected_year)
 
+    map_uhc = map_uhc[map_uhc['year_recorded'] == map_uhc['year_recorded'].max()]
+
     min_value = map_uhc['value'].min()
     max_value = map_uhc['value'].max()
 
+    map_uhc["alpha3"] = map_uhc["id_country"].str.upper()
+    map_uhc["name"] = map_uhc["alpha3"].map(geo_df.set_index("CODE")["NAME"])
+
+
+    selected_geojson_data = {
+        "type": "FeatureCollection",
+        "features": [
+            feature
+            for feature in geojson_data["features"]
+            if feature["properties"]["CODE"] in map_uhc["alpha3"].values
+        ]
+    }
+
+
     fig_map = px.choropleth(
         data_frame=map_uhc,
-        locations=map_uhc['id_country'],
-        color=map_uhc['value'],
-        hover_name=map_uhc['id_country'],
-        title=f"UHC Service Coverage Index ({selected_year[0]} - {selected_year[1]})",
-        color_continuous_scale='Blues',
+        geojson=selected_geojson_data,
+        locations="alpha3",
+        featureidkey="properties.CODE",
+        color="value",
+        hover_name="name",
+        title=f"UHC Service Coverage Index in {map_uhc['year_recorded'].max()}",
+        color_continuous_scale="Blues",
         range_color=[min_value, max_value],
-        hover_data={'value': True}
+        hover_data={"value": True}
     )
 
     fig_map.update_traces(
         hovertemplate="<b>%{hovertext}</b><br>UHC Index: %{z}<extra></extra>",
-        hovertext=map_uhc['id_country']
+        hovertext=map_uhc["name"]
     )
 
-    fig_map.update_layout(
-        coloraxis_showscale=True,
-        coloraxis_colorbar={
-            "title": "UHC Index",
-            "tickvals": [min_value, (min_value + max_value) / 2, max_value],
-            "ticktext": [f"{min_value:.0f}", f"{(min_value + max_value) / 2:.0f}", f"{max_value:.0f}"]
-        },
-        margin={"r": 0, "t": 50, "l": 0, "b": 0}
-    )
+    fig_map.update_geos(fitbounds="locations", visible=False)
+
+    # only display the borders of the selected countries : selected_countries_list
+    border_countries = [country["alpha3"] for country in selected_countries_list]
+
+    border_geojson_data = [
+        feature for feature in geojson_data["features"]
+        if feature["properties"]["CODE"] in border_countries
+    ]
+
+
+    for feature in border_geojson_data:
+        geometry = feature['geometry']
+        if geometry['type'] == 'Polygon':
+            coordinates = geometry['coordinates']
+        elif geometry['type'] == 'MultiPolygon':
+            coordinates = [polygon[0] for polygon in geometry['coordinates']]
+
+
+        for coordinate in coordinates:
+            fig_map.add_trace(go.Scattergeo(
+                lon=[coord[0] for coord in coordinate],
+                lat=[coord[1] for coord in coordinate],
+                mode='lines',
+                line=dict(width=2, color='red'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
 
     return fig_map
 
@@ -946,7 +983,6 @@ def update_global_average(selected_category, indicator_code, selected_year):
 
 
 
-port = int(os.environ.get("PORT", 8080))
 # Run the Dash app
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=int(os.getenv("PORT")), debug=False)

@@ -349,7 +349,7 @@ class FetchPage(Fetch):
         if self.source_dataset == "who-data":
             datasets_url = f"{base_url}/dataset/{self.source_dataset}-for-{self.id_country}"
         elif self.source_dataset == "world-bank-health-indicators" :
-            datasets_url = f"{base_url}/dataset/{self.source_dataset}-for-{self.country.replace(' ', '-').replace(',','').replace("'","-")}"
+            datasets_url = f"{base_url}/dataset/{self.source_dataset}-for-{self.country.replace(' ', '-').replace(',','')}"
         else: # world-bank-health-indicators
             datasets_url = f"{base_url}/dataset/{self.source_dataset}"
 
