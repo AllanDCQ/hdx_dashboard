@@ -61,7 +61,7 @@ def update_all_health_status():
     """
     Updates the health status for all countries by fetching data from various sources.
     """
-    with open("countries.json", "r") as f:
+    with open("assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [
@@ -203,7 +203,7 @@ def update_all_services_coverages():
     """
     Updates the services coverages indicators for all countries by fetching data from various sources.
     """
-    with open("countries.json", "r") as f:
+    with open("assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [
@@ -360,7 +360,7 @@ def update_all_risk_factors():
     """
     Updates the health status for all countries by fetching data from various sources.
     """
-    with open("countries.json", "r") as f:
+    with open("assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [
@@ -515,7 +515,7 @@ def update_all_health_systems():
     """
     Updates the health status for all countries by fetching data from various sources.
     """
-    with open("countries.json", "r") as f:
+    with open("assets/countries.json", "r") as f:
         countries = json.load(f)
 
     country_list = [

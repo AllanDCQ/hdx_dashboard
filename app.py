@@ -1,7 +1,7 @@
 import json
+import os
 from types import NoneType
 
-import os
 from flask import Flask
 from flask_caching import Cache
 
@@ -11,9 +11,10 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dc
 import numpy as np
 
-import app_function as af
+from src import app_function as af
 from src.app_risks import generate_factors_risk_status_page
 from src.app_status import generate_health_status_page
+from src.app_systems import generate_health_systems_page, get_health_systems_data_uhc
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -72,14 +73,14 @@ classButton = "btn btn-primary btn-sm mx-1"
 # --------------------------------------------------- Initialize Data --------------------------------------------------
 
 # Load country data from JSON file of countries
-file_path = "countries.json"
+file_path = "assets/countries.json"
 with open(file_path, "r") as file:
     country_data = json.load(file)
 
 
 @cache.memoize(timeout=86400)  # Cache for 1 day
 def get_geo_df():
-    file_path = "filtered_world.geojson"
+    file_path = "assets/filtered_world.geojson"
     with open(file_path, "r") as file:
         geojson_data = json.load(file)
 
@@ -545,7 +546,7 @@ def update_map(*args):
 
 def update_map_health_systems() :
 
-    map_uhc = af.get_health_systems_data_uhc(selected_countries_list, selected_year)
+    map_uhc = get_health_systems_data_uhc(selected_countries_list, selected_year)
 
     min_value = map_uhc['value'].min()
     max_value = map_uhc['value'].max()
@@ -600,24 +601,12 @@ def display_status_page():
             return af.generate_coverage_status_page(selected_countries_list)
 
         case "Health Systems":
-            return af.generate_health_systems_page(selected_countries_list,selected_year)
+            return generate_health_systems_page(selected_countries_list,selected_year)
 
         case _:
             return None
 
 
-##########################Health Status Page############################################
-
-
-
-
-
-
-
-
-
-
-#######################################################################################
 
 # Run the Dash app
 if __name__ == "__main__":

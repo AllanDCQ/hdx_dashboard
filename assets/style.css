@@ -62,10 +62,40 @@
 }
 
 
+/* --------------------------------------------------- Page Systems ------------------------------------------------- */
+.responsive-row-map_systems {
+    width: 100%;
+    height: 50%;
+}
+
+.responsive-row-1_systems {
+    display: flex;
+    width: 100%;
+    height: 50%;
+    align-items: center;
+    justify-content: center;
+}
+
+.responsive-container_systems {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+
+
+
+
+
+
+
 
 /* Appliquer flex-direction: column sur les petits écrans */
 @media screen and (max-width: 1000px) {
 
+    .responsive-row-1_systems,
     .responsive-row_risk,
     .responsive-container {
         flex-direction: column;

@@ -4,7 +4,7 @@ import plotly.express as px
 from sqlalchemy import select, create_engine, MetaData, Table, and_
 from dash import dcc, html
 
-from app_function import color_palette
+from src.app_function import color_palette
 
 
 
@@ -150,7 +150,7 @@ def update_MMR100k_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40%%'})
+    return dcc.Graph(id='health-status-graph_1', figure=fig, style={'width': '100%', 'height': '40%%'})
 
 #------------------------------------------------- WHOSIS_000001 Graph ------------------------------------------------#
 
@@ -244,7 +244,7 @@ def update_WHOSIS_000001_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='health-status-graph', figure=fig, style={'width': '100%', 'height': '40%%'})
+    return dcc.Graph(id='health-status-graph_2', figure=fig, style={'width': '100%', 'height': '40%%'})
 
 #------------------------------------------------- WHOSIS_000002 Graph ------------------------------------------------#
 
@@ -339,7 +339,7 @@ def update_WHOSIS_000002_graph(selected_countries_list, selected_year):
     else:
         fig = {}
 
-    return dcc.Graph(id='health-status-graph', figure=fig,style={'width': '100%', 'height': '40%%'})
+    return dcc.Graph(id='health-status-graph_3', figure=fig,style={'width': '100%', 'height': '40%%'})
 
 #-------------------------------------------------- SH_DYN_MORT Graph -------------------------------------------------#
 
