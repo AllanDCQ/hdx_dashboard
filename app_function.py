@@ -10,7 +10,6 @@ from dash import dcc, html
 
 color_palette = px.colors.qualitative.Plotly
 
-
 def generate_country_menu(country_data):
     """
     Generate a dropdown menu for selecting countries, organized by regions and subregions.

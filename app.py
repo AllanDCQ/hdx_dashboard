@@ -98,9 +98,9 @@ app.layout = html.Div([
     # =============================================== Top Navigation Bar ===============================================
     html.Div([
         # Project Logo
-        html.Img(src="/assets/logo.png", style={'height': '5vh', 'paddingRight': '1vw'}),
+        html.A(href="https://hdx-dashboard.onrender.com/", target="_blank", children=html.Img(src="/assets/logo.png", style={'height': '5vh'})),
         # University Logo
-        html.Img(src="/assets/lille.png", style={'height': '4vh', 'paddingLeft': '1vw', 'paddingRight': '5vw'}),
+        html.A(href="https://www.univ-lille.fr/", target="_blank", children=html.Img(src="/assets/lille.png", style={'height': '4vh', 'paddingLeft': '1vw', 'paddingRight': '5vw'})),
 
         html.Div(id="navbar-content", style={"width" : "90%"}),
         dcc.Store(id="window-width-provider"),
@@ -197,7 +197,6 @@ def adjust_navbar_based_on_width(width):
     :return: The updated navigation bar content.
     :rtype: dash.development.base_component.Component
     """
-    # Si la largeur est supérieure à 768px, afficher un certain contenu
     if width > 1000:
         return html.Div([
             # ****************************** Navigation Buttons ******************************
@@ -444,7 +443,7 @@ def update_page_and_countries(*args):
     return (
         html.H4(f"{title_page} : {countries}"),
         alert,
-        display_status_page(selected_year),  # Passez selected_year ici
+        display_status_page(),
         selected_countries_list
     )
 
@@ -577,7 +576,7 @@ def update_map_health_systems() :
 
     return fig_map
 
-def display_status_page(selected_year):
+def display_status_page():
     """
     Display the status page based on the selected title.
 
