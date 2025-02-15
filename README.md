@@ -4,7 +4,8 @@ Welcome to the **HealthScope Dashboard** GitHub repository. This project is desi
 
 ## 🌍  Live Application
 
-Access the interactive dashboard via the link: [HealthScope Dashboard](https://hdx-dashboard.onrender.com) (⚠️ The first connection may take more than a minute to load).
+Access the interactive dashboard via the link: [HealthScope Dashboard](https://hdx-dashboard.onrender.com) <sub>(⚠️ The first connection may take more than a minute to load)</sub>.
+
 
 ## 🖼️ Dashboard Previews
 
